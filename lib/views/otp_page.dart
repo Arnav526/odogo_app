@@ -249,7 +249,7 @@ class _OtpPageState extends State<OtpPage> {
                 onPressed: _isLoading ? null : _resendLink,
                 child: const Text('Resend OTP'),
               ),
-              const Spacer(),
+              const SizedBox(height: 40),
             ],
           ),
         ),

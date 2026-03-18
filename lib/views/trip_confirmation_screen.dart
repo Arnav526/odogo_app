@@ -80,7 +80,7 @@ class _TripConfirmationScreenState extends State<TripConfirmationScreen> {
     if (_routePoints != null && _routePoints!.length >= 2) {
       return CameraFit.bounds(
         bounds: LatLngBounds.fromPoints(_routePoints!),
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.all(40), // Added more padding so it doesn't hide behind the bottom sheet
       );
     }
 
@@ -90,7 +90,7 @@ class _TripConfirmationScreenState extends State<TripConfirmationScreen> {
 
     return CameraFit.bounds(
       bounds: LatLngBounds.fromPoints([widget.pickupPoint!, widget.dropoffPoint!]),
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(40),
     );
   }
 
@@ -109,7 +109,7 @@ class _TripConfirmationScreenState extends State<TripConfirmationScreen> {
     final routePoints = _polylinePoints();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F6),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.black, // Synced to OdoGo theme
         elevation: 0,
@@ -121,116 +121,111 @@ class _TripConfirmationScreenState extends State<TripConfirmationScreen> {
       ),
       body: Column(
         children: [
-          // Map Overview Area
-          Container(
-            height: 180,
-            width: double.infinity,
-            color: Colors.black,
-            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: FlutterMap(
-                key: ValueKey<int>(routePoints?.length ?? 0),
-                options: MapOptions(
-                  initialCenter: widget.pickupPoint ?? const LatLng(26.5123, 80.2329),
-                  initialZoom: 15,
-                  initialCameraFit: _initialCameraFit(),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.odogo_app',
-                    tileBuilder: (context, tileWidget, tile) {
-                      return ColorFiltered(
-                        colorFilter: const ColorFilter.matrix([
-                          -0.2126, -0.7152, -0.0722, 0, 255,
-                          -0.2126, -0.7152, -0.0722, 0, 255,
-                          -0.2126, -0.7152, -0.0722, 0, 255,
-                          0,       0,       0,       1, 0,
-                        ]),
-                        child: tileWidget,
-                      );
-                    },
-                  ),
-                  if (routePoints != null)
-                    PolylineLayer(
-                      polylines: [
-                        Polyline(
-                          points: routePoints,
-                          strokeWidth: 5,
-                          color: Colors.blue,
-                        ),
-                      ],
-                    ),
-                  if (widget.pickupPoint != null || widget.dropoffPoint != null)
-                    MarkerLayer(
-                      markers: [
-                        if (widget.pickupPoint != null)
-                          Marker(
-                            point: widget.pickupPoint!,
-                            width: 34,
-                            height: 34,
-                            child: const Icon(Icons.my_location, color: Color(0xFF66D2A3), size: 28),
-                          ),
-                        if (widget.dropoffPoint != null)
-                          Marker(
-                            point: widget.dropoffPoint!,
-                            width: 34,
-                            height: 34,
-                            child: const Icon(Icons.location_on, color: Colors.redAccent, size: 30),
-                          ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-          ),
-          
-          // Info Cards
+          // 1. FULL SCREEN MAP AREA
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
+            child: FlutterMap(
+              key: ValueKey<int>(routePoints?.length ?? 0),
+              options: MapOptions(
+                initialCenter: widget.pickupPoint ?? const LatLng(26.5123, 80.2329),
+                initialZoom: 15,
+                initialCameraFit: _initialCameraFit(),
+              ),
               children: [
-                _buildLocationCard(
-                  icon: Icons.location_on,
-                  label: 'PICKUP',
-                  address: widget.pickupLabel,
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.odogo_app',
+                  tileBuilder: (context, tileWidget, tile) {
+                    return ColorFiltered(
+                      colorFilter: const ColorFilter.matrix([
+                        -0.2126, -0.7152, -0.0722, 0, 255,
+                        -0.2126, -0.7152, -0.0722, 0, 255,
+                        -0.2126, -0.7152, -0.0722, 0, 255,
+                        0,       0,       0,       1, 0,
+                      ]),
+                      child: tileWidget,
+                    );
+                  },
                 ),
-                const SizedBox(height: 16),
-                _buildLocationCard(
-                  icon: Icons.near_me,
-                  label: 'DESTINATION',
-                  address: widget.destination, // Dynamically uses what you searched!
-                ),
-                const SizedBox(height: 24),
-                // _buildPriceCard(),
+                if (routePoints != null)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: routePoints,
+                        strokeWidth: 5,
+                        color: Colors.blue,
+                      ),
+                    ],
+                  ),
+                if (widget.pickupPoint != null || widget.dropoffPoint != null)
+                  MarkerLayer(
+                    markers: [
+                      if (widget.pickupPoint != null)
+                        Marker(
+                          point: widget.pickupPoint!,
+                          width: 34,
+                          height: 34,
+                          child: const Icon(Icons.my_location, color: Color(0xFF66D2A3), size: 28),
+                        ),
+                      if (widget.dropoffPoint != null)
+                        Marker(
+                          point: widget.dropoffPoint!,
+                          width: 34,
+                          height: 34,
+                          child: const Icon(Icons.location_on, color: Colors.redAccent, size: 30),
+                        ),
+                    ],
+                  ),
               ],
             ),
           ),
-
-          // Bottom Action
+          
+          // 2. BOTTOM DETAILS & ACTION SHEET
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.only(top: 24, left: 20, right: 20, bottom: 30),
             decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))],
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)), // Rounded top corners
+              boxShadow: [
+                BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, -5))
+              ],
             ),
-            child: ElevatedButton(
-              onPressed: () {
-                // Moving forward to the Waiting screen!
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const WaitingForDriverScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF66D2A3), // Synced to OdoGo Green
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Center(
-                child: Text('Confirm Trip', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: SafeArea(
+              top: false, // Prevents safe area from adding space at the top of the container
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // Wraps tightly around the content
+                children: [
+                  // Location Cards
+                  _buildLocationCard(
+                    icon: Icons.my_location, // Changed to a dot-style icon for pickup
+                    label: 'PICKUP',
+                    address: widget.pickupLabel,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildLocationCard(
+                    icon: Icons.location_on,
+                    label: 'DESTINATION',
+                    address: widget.destination,
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Confirm Button
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const WaitingForDriverScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF66D2A3),
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size.fromHeight(56), // Standardized height
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Confirm Trip', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
             ),
           ),
@@ -239,66 +234,30 @@ class _TripConfirmationScreenState extends State<TripConfirmationScreen> {
     );
   }
 
-  // Added 'required' keywords to fix syntax
   Widget _buildLocationCard({required IconData icon, required String label, required String address}) {
-    return Card(
-      elevation: 2,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(icon, color: const Color(0xFF66D2A3), size: 28), // OdoGo Green
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                  const SizedBox(height: 4),
-                  Text(address, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F6F6), // Very light grey background to separate from the white sheet
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF66D2A3), size: 28),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                const SizedBox(height: 4),
+                Text(address, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-
-//   Widget _buildPriceCard() {
-//     return Card(
-//       elevation: 2,
-//       color: Colors.white,
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//       child: Padding(
-//         padding: const EdgeInsets.all(16),
-//         child: Column(
-//           children: [
-//             const Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//               children: [
-//                 Text('Estimated Fare', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-//                 Text('₹15', // Realistic campus rickshaw price
-//                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Color(0xFF66D2A3))),
-//               ],
-//             ),
-//             const Divider(height: 24),
-//             Row(
-//               children: [
-//                 Container(
-//                   padding: const EdgeInsets.all(4),
-//                   decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(4)),
-//                   child: const Icon(Icons.qr_code, size: 16, color: Colors.black87),
-//                 ),
-//                 const SizedBox(width: 12),
-//                 const Text('UPI / Cash', style: TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500)),
-//               ],
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-  // }
 }

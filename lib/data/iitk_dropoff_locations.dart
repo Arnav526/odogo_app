@@ -50,10 +50,10 @@ class DropoffLocation {
 }
 
 const List<DropoffLocation> iitkDropoffLocations = <DropoffLocation>[
-  DropoffLocation(name: 'Main Gate', latitude: 26.5108, longitude: 80.2466, aliases: <String>['gate']),
-  DropoffLocation(name: 'Academic Area Gate 3', latitude: 26.5105, longitude: 80.2320, aliases: <String>['aa gate 3', 'academic', 'lhc', 'library', 'lecture hall complex']),
+  DropoffLocation(name: 'Main Gate', latitude: 26.5108, longitude: 80.2466, aliases: <String>['gate', 'main', 'icici', 'parking']),
+  DropoffLocation(name: 'Academic Area Gate 3', latitude: 26.5105, longitude: 80.2320, aliases: <String>['aa gate 3', 'academic', 'lhc', 'library', 'lecture hall complex', 'tutorial', 'tb', 'block']),
   DropoffLocation(name: 'Outreach Auditorium', latitude: 26.5091, longitude: 80.2346, aliases: <String>['oat', 'auditorium', 'clothes']),
-  DropoffLocation(name: 'Academic Area Gate 1', latitude: 26.5131, longitude: 80.2353, aliases: <String>['cc', 'rm', 'kd', 'hr kadim', 'cse', 'dosa', 'office', 'faculty building', 'computer centre']),
+  DropoffLocation(name: 'Academic Area Gate 1', latitude: 26.5131, longitude: 80.2353, aliases: <String>['cc', 'rm', 'kd', 'hr kadim', 'cse', 'dosa', 'office', 'faculty building', 'computer',  'centre', 'center']),
   DropoffLocation(name: 'Visitors Hostel 1', latitude: 26.5073, longitude: 80.2345, aliases: <String>['vh1']),
   DropoffLocation(name: 'Visitors Hostel 2', latitude: 26.5116, longitude: 80.2259, aliases: <String>['vh2']),
   DropoffLocation(name: 'Academic Area Gate 2', latitude: 26.5105, longitude: 80.2345, aliases: <String>['subway', 'ccd', 'library', 'starbucks']),
@@ -87,4 +87,6 @@ const List<DropoffLocation> iitkDropoffLocations = <DropoffLocation>[
   DropoffLocation(name: 'Institute Nursery', latitude: 26.5152, longitude: 80.2352 , aliases: <String>['nursery', 'garden', 'flowers']),
   DropoffLocation(name: 'Swimming Pool', latitude: 26.5052, longitude: 80.2312, aliases: <String>['swimming', 'pool']),
   DropoffLocation(name: 'Old Sports Complex', latitude: 26.5085, longitude: 80.2313, aliases: <String>['sports', 'complex', 'old sports complex']),
+  DropoffLocation(name: 'Old Sports Complex', latitude: 26.5085, longitude: 80.2313, aliases: <String>['sports', 'complex', 'old sports complex']),
+  DropoffLocation(name: 'Shivli Gate', latitude: 26.5041, longitude: 80.2251, aliases: <String>['shivli', 'gate']),
 ];
