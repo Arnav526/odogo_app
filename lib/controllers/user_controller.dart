@@ -60,6 +60,7 @@ class UserController extends Notifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       await _repository.updateUser(_getUid(), {'mode': mode.name});
+      await ref.read(authControllerProvider.notifier).refreshUser();
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);

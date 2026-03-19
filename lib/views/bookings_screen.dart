@@ -272,7 +272,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                   // phone number, or rickshaw details here yet without fetching the driver's User document.
                   // For now, we indicate if a driver is assigned or pending.
                   Text(
-                    'Driver ID: ${trip.driverID ?? 'Looking for drivers...'}',
+                    'Driver ID: ${trip.driver ?? 'Looking for drivers...'}',
                     style: const TextStyle(color: Colors.black, fontSize: 14),
                   ),
                 ],

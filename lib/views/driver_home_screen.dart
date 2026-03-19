@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:odogo_app/controllers/auth_controller.dart';
+import 'package:odogo_app/controllers/trip_controller.dart';
 import 'package:odogo_app/controllers/user_controller.dart';
 import 'package:odogo_app/models/enums.dart';
+import 'package:odogo_app/models/trip_model.dart';
 import 'dart:async';
 
 // 1. LINKING THE PROFILE & BOOKINGS PAGES
@@ -55,8 +57,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   // --- MAP STATE ---
   // bool _isOnline = false;
-  bool _hasIncomingRequest = false;
-  Timer? _simulationTimer;
+  // bool _hasIncomingRequest = false;
+  // Timer? _simulationTimer;
 
   @override
   void initState() {
@@ -126,12 +128,11 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   }
 
   @override
-  void dispose() {
-    _simulationTimer?.cancel();
-    _mapController.dispose();
-    _locationSubscription?.cancel();
-    super.dispose();
-  }
+void dispose() {
+  _mapController.dispose();
+  _locationSubscription?.cancel();
+  super.dispose();
+}
 
   // --- BOTTOM NAV LOGIC ---
   void _onBottomNavTapped(int index) {
@@ -140,34 +141,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     });
   }
 
-  // --- MAP LOGIC ---
-  // void _toggleOnlineState() {
-  //   setState(() {
-  //     _isOnline = !_isOnline;
-  //     if (!_isOnline) {
-  //       _hasIncomingRequest = false;
-  //       _simulationTimer?.cancel();
-  //     }
-  //   });
-
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(
-  //       content: Text(_isOnline ? 'You are now ONLINE.' : 'You are OFFLINE.'),
-  //       backgroundColor: _isOnline ? odogoGreen : Colors.red,
-  //       duration: const Duration(seconds: 2),
-  //     ),
-  //   );
-
-  //   if (_isOnline) {
-  //     _simulationTimer = Timer(const Duration(seconds: 4), () {
-  //       if (mounted && _isOnline) {
-  //         setState(() {
-  //           _hasIncomingRequest = true;
-  //         });
-  //       }
-  //     });
-  //   }
-  // }
   Future<void> _toggleOnlineState() async {
     // 1. Get the current user to check their status
     final currentUser = ref.read(currentUserProvider);
@@ -191,21 +164,21 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       );
     }
 
-    // 5. Handle your simulation timer based on the new mode
-    if (newMode == DriverMode.online) {
-      _simulationTimer = Timer(const Duration(seconds: 4), () {
-        if (mounted && ref.read(currentUserProvider)?.mode == DriverMode.online) {
-          setState(() {
-            _hasIncomingRequest = true;
-          });
-        }
-      });
-    } else {
-      setState(() {
-        _hasIncomingRequest = false;
-      });
-      _simulationTimer?.cancel();
-    }
+    // // 5. Handle your simulation timer based on the new mode
+    // if (newMode == DriverMode.online) {
+    //   _simulationTimer = Timer(const Duration(seconds: 4), () {
+    //     if (mounted && ref.read(currentUserProvider)?.mode == DriverMode.online) {
+    //       setState(() {
+    //         _hasIncomingRequest = true;
+    //       });
+    //     }
+    //   });
+    // } else {
+    //   setState(() {
+    //     _hasIncomingRequest = false;
+    //   });
+    //   _simulationTimer?.cancel();
+    // }
   }
 
   void _acceptRide() {
@@ -224,12 +197,22 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     final currentUser = ref.watch(currentUserProvider);
     final _isOnline = currentUser?.mode == DriverMode.online;
 
+    // --- THE REAL BACKEND CONNECTION ---
+    // Watch the stream of pending trips
+    final pendingTripsAsync = ref.watch(pendingTripsProvider);
+    
+    // Extract the list (default to empty if loading/error)
+    final availableTrips = pendingTripsAsync.value ?? [];
+    
+    // Grab the first trip in the queue, if any exist
+    final incomingTrip = availableTrips.isNotEmpty ? availableTrips.first : null;
+
     return Scaffold(
       backgroundColor: Colors.white, 
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          _buildMapHome(_isOnline), // 1. PASS IT HERE
+          _buildMapHome(_isOnline, incomingTrip),
           const DriverBookingsScreen(), 
           const DriverProfileScreen(),   
         ],
@@ -251,7 +234,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   // ==========================================
   // VIEW 1: THE MAP DASHBOARD
   // ==========================================
-  Widget _buildMapHome(bool _isOnline) {
+  Widget _buildMapHome(bool _isOnline, TripModel? incomingTrip) {
     return Stack(
       children: [
         FlutterMap(
@@ -380,7 +363,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          if (!_hasIncomingRequest) ...[
+                          // 1. Replaced !_hasIncomingRequest with checking the real trip!
+                          if (incomingTrip == null) ...[
                             SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: odogoGreen, strokeWidth: 2.5)),
                             const SizedBox(width: 12),
                             const Text('Searching for rides...', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
@@ -392,7 +376,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     : const Text('You are Offline', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.black)),
                 ),
               ),
-              if (_hasIncomingRequest) ...[
+              if (incomingTrip != null) ...[
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -405,14 +389,22 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     children: [
                       const Text('Incoming Request', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 18)),
                       const SizedBox(height: 12),
-                      _buildMapInfoRow('Passenger:', 'Shashwath'),
-                      _buildMapInfoRow('Location:', 'Hall 1'),
+                      // 3. Replaced hardcoded text with REAL database fields!
+                      _buildMapInfoRow('Passenger:', incomingTrip.commuter),
+                      _buildMapInfoRow('Location:', incomingTrip.startLocName),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildMapInfoRow('Drop:', 'OAT'),
+                          _buildMapInfoRow('Drop:', incomingTrip.endLocName),
                           ElevatedButton(
-                            onPressed: _acceptRide,
+                            // 4. Wired the Accept button to actually update the database
+                            onPressed: () async {
+                              final currentUserId = ref.read(currentUserProvider)?.userID;
+                              if (currentUserId != null) {
+                                await ref.read(tripControllerProvider.notifier).acceptRide(incomingTrip.tripID, currentUserId);
+                              }
+                              _acceptRide(); // Navigates to the active pickup screen
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: odogoGreen, 
                               foregroundColor: Colors.black,
