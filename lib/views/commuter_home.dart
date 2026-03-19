@@ -3,20 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Added Riverpod
+import '../controllers/auth_controller.dart'; // To fetch the user profile
 import '../data/iitk_dropoff_locations.dart';
 import 'bookings_screen.dart';
 import 'profile_screen.dart';
 import 'trip_confirmation_screen.dart';
 import 'schedule_booking_screen.dart';
 
-class CommuterHomeScreen extends StatefulWidget {
+// Upgraded to ConsumerStatefulWidget
+class CommuterHomeScreen extends ConsumerStatefulWidget {
   const CommuterHomeScreen({super.key});
 
   @override
-  State<CommuterHomeScreen> createState() => _CommuterHomeScreenState();
+  ConsumerState<CommuterHomeScreen> createState() => _CommuterHomeScreenState();
 }
 
-class _CommuterHomeScreenState extends State<CommuterHomeScreen> {
+class _CommuterHomeScreenState extends ConsumerState<CommuterHomeScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
@@ -54,14 +57,15 @@ class _CommuterHomeScreenState extends State<CommuterHomeScreen> {
 // ============================================================================
 // SECTION: The Home (Map) Tab UI
 // ============================================================================
-class _MapHomeView extends StatefulWidget {
+// Upgraded to ConsumerStatefulWidget
+class _MapHomeView extends ConsumerStatefulWidget {
   const _MapHomeView();
 
   @override
-  State<_MapHomeView> createState() => _MapHomeViewState();
+  ConsumerState<_MapHomeView> createState() => _MapHomeViewState();
 }
 
-class _MapHomeViewState extends State<_MapHomeView> with WidgetsBindingObserver {
+class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingObserver {
   final MapController _mapController = MapController();
   static const LatLng _defaultCenter = LatLng(26.5123, 80.2329);
   static const double _recenterThresholdMeters = 25;
@@ -269,82 +273,113 @@ class _MapHomeViewState extends State<_MapHomeView> with WidgetsBindingObserver 
   Future<void> _openPickupSelector() async {
     String localSearchText = '';
     
+    // 1. Fetch the user's saved addresses from the database state
+    final user = ref.read(currentUserProvider);
+    final homeAddress = (user?.roomNo != null && user!.roomNo!.isNotEmpty) ? user.roomNo : null;
+    final workAddress = (user?.savedLocations != null && user!.savedLocations!.isNotEmpty && user.savedLocations![0].isNotEmpty) 
+        ? user.savedLocations![0] 
+        : null;
+    
     final selected = await showModalBottomSheet<dynamic>(
       context: context,
       isScrollControlled: true, 
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: Colors.transparent, 
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setSheetState) {
             
-            // ---> UPDATED FILTER LOGIC: Now checks names AND your custom aliases <---
             List<DropoffLocation> sheetFiltered = localSearchText.isEmpty 
               ? iitkDropoffLocations 
               : iitkDropoffLocations.where((loc) => 
                   loc.name.toLowerCase().contains(localSearchText.toLowerCase()) || 
-                  loc.matches(localSearchText) // Triggers your alias logic
+                  loc.matches(localSearchText) 
                 ).toList();
+
+            // Smart logic to show Home/Work tiles if they match the search text (or if search is empty)
+            bool showHome = homeAddress != null && (localSearchText.isEmpty || 'home'.contains(localSearchText.toLowerCase()) || homeAddress.toLowerCase().contains(localSearchText.toLowerCase()));
+            bool showWork = workAddress != null && (localSearchText.isEmpty || 'work'.contains(localSearchText.toLowerCase()) || workAddress.toLowerCase().contains(localSearchText.toLowerCase()));
 
             return Padding(
               padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), 
-              child: SafeArea(
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.65,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
-                        child: Text('Choose pickup point', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-                      ),
-                      
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        child: TextField(
-                          autofocus: true,
-                          decoration: InputDecoration(
-                            hintText: 'Search or type custom location...',
-                            prefixIcon: const Icon(Icons.search, color: Colors.black54),
-                            filled: true,
-                            fillColor: Colors.grey[200],
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              child: Container(
+                decoration: const BoxDecoration(color: Colors.black, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                child: SafeArea(
+                  bottom: false,
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.65,
+                    decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+                          child: Text('Choose pickup point', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                        ),
+                        
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          child: TextField(
+                            autofocus: true,
+                            decoration: InputDecoration(
+                              hintText: 'Search or type custom location...',
+                              prefixIcon: const Icon(Icons.search, color: Colors.black54),
+                              filled: true,
+                              fillColor: Colors.grey[200],
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                            ),
+                            onChanged: (val) {
+                              setSheetState(() => localSearchText = val);
+                            },
                           ),
-                          onChanged: (val) {
-                            setSheetState(() => localSearchText = val);
-                          },
                         ),
-                      ),
 
-                      ListTile(
-                        leading: const Icon(Icons.my_location, color: Color(0xFF66D2A3)),
-                        title: const Text('Use current location', style: TextStyle(fontWeight: FontWeight.bold)),
-                        onTap: () => Navigator.pop(sheetContext, null),
-                      ),
-                      
-                      if (localSearchText.isNotEmpty && sheetFiltered.isEmpty)
                         ListTile(
-                          leading: const Icon(Icons.edit_location_alt, color: Colors.black),
-                          title: Text('Set pickup as "$localSearchText"', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          onTap: () => Navigator.pop(sheetContext, localSearchText), 
+                          leading: const Icon(Icons.my_location, color: Color(0xFF66D2A3)),
+                          title: const Text('Use current location', style: TextStyle(fontWeight: FontWeight.bold)),
+                          onTap: () => Navigator.pop(sheetContext, null),
                         ),
 
-                      const Divider(height: 1),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: sheetFiltered.length,
-                          itemBuilder: (context, index) {
-                            final location = sheetFiltered[index];
-                            return ListTile(
-                              leading: const Icon(Icons.place_outlined, color: Colors.black54),
-                              title: Text(location.name),
-                              onTap: () => Navigator.pop(sheetContext, location), 
-                            );
-                          },
+                        // --- THE DYNAMIC HOME & WORK TILES ---
+                        if (showHome)
+                          ListTile(
+                            leading: const Icon(Icons.home, color: Colors.black54),
+                            title: const Text('Home', style: TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(homeAddress!, style: const TextStyle(color: Colors.grey)),
+                            onTap: () => Navigator.pop(sheetContext, homeAddress),
+                          ),
+                        
+                        if (showWork)
+                          ListTile(
+                            leading: const Icon(Icons.work, color: Colors.black54),
+                            title: const Text('Work', style: TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(workAddress!, style: const TextStyle(color: Colors.grey)),
+                            onTap: () => Navigator.pop(sheetContext, workAddress),
+                          ),
+                        
+                        if (localSearchText.isNotEmpty && sheetFiltered.isEmpty && !showHome && !showWork)
+                          ListTile(
+                            leading: const Icon(Icons.edit_location_alt, color: Colors.black),
+                            title: Text('Set pickup as "$localSearchText"', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            onTap: () => Navigator.pop(sheetContext, localSearchText), 
+                          ),
+
+                        const Divider(height: 1),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: sheetFiltered.length,
+                            itemBuilder: (context, index) {
+                              final location = sheetFiltered[index];
+                              return ListTile(
+                                leading: const Icon(Icons.place_outlined, color: Colors.black54),
+                                title: Text(location.name),
+                                onTap: () => Navigator.pop(sheetContext, location), 
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -377,76 +412,107 @@ class _MapHomeViewState extends State<_MapHomeView> with WidgetsBindingObserver 
   Future<void> _openDropoffSelector() async {
     String localSearchText = '';
     
+    // 1. Fetch the user's saved addresses from the database state
+    final user = ref.read(currentUserProvider);
+    final homeAddress = (user?.roomNo != null && user!.roomNo!.isNotEmpty) ? user.roomNo : null;
+    final workAddress = (user?.savedLocations != null && user!.savedLocations!.isNotEmpty && user.savedLocations![0].isNotEmpty) 
+        ? user.savedLocations![0] 
+        : null;
+        
     final selected = await showModalBottomSheet<dynamic>(
       context: context,
       isScrollControlled: true, 
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: Colors.transparent, 
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setSheetState) {
             
-            // ---> UPDATED FILTER LOGIC: Now checks names AND your custom aliases <---
             List<DropoffLocation> sheetFiltered = localSearchText.isEmpty 
               ? iitkDropoffLocations 
               : iitkDropoffLocations.where((loc) => 
                   loc.name.toLowerCase().contains(localSearchText.toLowerCase()) || 
-                  loc.matches(localSearchText) // Triggers your alias logic
+                  loc.matches(localSearchText) 
                 ).toList();
+
+            // Smart logic to show Home/Work tiles
+            bool showHome = homeAddress != null && (localSearchText.isEmpty || 'home'.contains(localSearchText.toLowerCase()) || homeAddress.toLowerCase().contains(localSearchText.toLowerCase()));
+            bool showWork = workAddress != null && (localSearchText.isEmpty || 'work'.contains(localSearchText.toLowerCase()) || workAddress.toLowerCase().contains(localSearchText.toLowerCase()));
 
             return Padding(
               padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), 
-              child: SafeArea(
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.65,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
-                        child: Text('Where to?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-                      ),
-                      
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        child: TextField(
-                          autofocus: true,
-                          decoration: InputDecoration(
-                            hintText: 'Search or type custom destination...',
-                            prefixIcon: const Icon(Icons.search, color: Colors.black54),
-                            filled: true,
-                            fillColor: Colors.grey[200],
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                          ),
-                          onChanged: (val) {
-                            setSheetState(() => localSearchText = val);
-                          },
+              child: Container(
+                decoration: const BoxDecoration(color: Colors.black, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                child: SafeArea(
+                  bottom: false,
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.65,
+                    decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+                          child: Text('Where to?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
                         ),
-                      ),
-                      
-                      if (localSearchText.isNotEmpty && sheetFiltered.isEmpty)
-                        ListTile(
-                          leading: const Icon(Icons.edit_location_alt, color: Colors.black),
-                          title: Text('Drop off at "$localSearchText"', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          onTap: () => Navigator.pop(sheetContext, localSearchText), 
+                        
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          child: TextField(
+                            autofocus: true,
+                            decoration: InputDecoration(
+                              hintText: 'Search or type custom destination...',
+                              prefixIcon: const Icon(Icons.search, color: Colors.black54),
+                              filled: true,
+                              fillColor: Colors.grey[200],
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                            ),
+                            onChanged: (val) {
+                              setSheetState(() => localSearchText = val);
+                            },
+                          ),
                         ),
 
-                      const Divider(height: 1),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: sheetFiltered.length,
-                          itemBuilder: (context, index) {
-                            final location = sheetFiltered[index];
-                            return ListTile(
-                              leading: const Icon(Icons.place_outlined, color: Colors.black54),
-                              title: Text(location.name),
-                              onTap: () => Navigator.pop(sheetContext, location), 
-                            );
-                          },
+                        // --- THE DYNAMIC HOME & WORK TILES ---
+                        if (showHome)
+                          ListTile(
+                            leading: const Icon(Icons.home, color: Colors.black54),
+                            title: const Text('Home', style: TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(homeAddress!, style: const TextStyle(color: Colors.grey)),
+                            onTap: () => Navigator.pop(sheetContext, homeAddress),
+                          ),
+                        
+                        if (showWork)
+                          ListTile(
+                            leading: const Icon(Icons.work, color: Colors.black54),
+                            title: const Text('Work', style: TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(workAddress!, style: const TextStyle(color: Colors.grey)),
+                            onTap: () => Navigator.pop(sheetContext, workAddress),
+                          ),
+                        
+                        if (localSearchText.isNotEmpty && sheetFiltered.isEmpty && !showHome && !showWork)
+                          ListTile(
+                            leading: const Icon(Icons.edit_location_alt, color: Colors.black),
+                            title: Text('Drop off at "$localSearchText"', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            onTap: () => Navigator.pop(sheetContext, localSearchText), 
+                          ),
+
+                        const Divider(height: 1),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: sheetFiltered.length,
+                            itemBuilder: (context, index) {
+                              final location = sheetFiltered[index];
+                              return ListTile(
+                                leading: const Icon(Icons.place_outlined, color: Colors.black54),
+                                title: Text(location.name),
+                                onTap: () => Navigator.pop(sheetContext, location), 
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -557,7 +623,6 @@ class _MapHomeViewState extends State<_MapHomeView> with WidgetsBindingObserver 
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 1. Pickup Box
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.only(bottom: 12),
@@ -587,7 +652,6 @@ class _MapHomeViewState extends State<_MapHomeView> with WidgetsBindingObserver 
                   ),
                 ),
                 
-                // 2. Dropoff Box
                 GestureDetector(
                   onTap: _openDropoffSelector,
                   child: Container(

@@ -68,12 +68,12 @@ class PersonalDetailsScreen extends StatelessWidget {
                 
                 _buildTile(
                   context, 
-                  Icons.person_outline, 
-                  'Gender',
+                  Icons.email_outlined, 
+                  'Email',
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const GenderSelectionScreen()),
+                      MaterialPageRoute(builder: (context) => const EmailEditScreen()),
                     );
                   }
                 ),
@@ -81,12 +81,12 @@ class PersonalDetailsScreen extends StatelessWidget {
                 
                 _buildTile(
                   context, 
-                  Icons.email_outlined, 
-                  'Email',
+                  Icons.person_outline, 
+                  'Gender',
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const EmailEditScreen()),
+                      MaterialPageRoute(builder: (context) => const GenderSelectionScreen()),
                     );
                   }
                 ),
