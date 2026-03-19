@@ -10,7 +10,8 @@ class UserModel {
   final String gender;
   final Timestamp dob;
   final UserRole role;
-  final List<Timestamp>? cancelHistory; // stores the time stamps of the rides cancelled in last 15 mins
+  final List<Timestamp>?
+  cancelHistory; // stores the time stamps of the rides cancelled in last 15 mins
 
   // Commuter-specific fields
   final List<String>? savedLocations;
@@ -62,13 +63,15 @@ class UserModel {
       ),
       savedLocations: parsedLocations,
       roomNo: json['roomNo'],
-      cancelHistory: json['cancelHistory'] != null 
-          ? List<Timestamp>.from(json['cancelHistory']) 
+      cancelHistory: json['cancelHistory'] != null
+          ? List<Timestamp>.from(json['cancelHistory'])
           : null,
       verificationStatus: json['verificationStatus'],
       aadharCard: json['aadharCard'],
       license: json['license'],
-      vehicle: json['vehicle'] != null ? VehicleModel.fromJson(json['vehicle']) : null,
+      vehicle: json['vehicle'] != null
+          ? VehicleModel.fromJson(json['vehicle'])
+          : null,
       mode: json['mode'] != null
           ? DriverMode.values.firstWhere((e) => e.name == json['mode'])
           : null,

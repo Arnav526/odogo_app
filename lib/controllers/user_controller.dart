@@ -1,11 +1,12 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odogo_app/models/enums.dart';
 import 'package:odogo_app/models/user_model.dart';
 import 'package:odogo_app/models/vehicle_model.dart';
 import 'package:odogo_app/repositories/user_repository.dart';
-import 'package:odogo_app/services/phone_auth_service.dart';
+//import 'package:odogo_app/services/phone_auth_service.dart';
 import 'package:odogo_app/services/storage_service.dart';
 import 'auth_controller.dart'; // To get the current user's ID
 
@@ -17,14 +18,15 @@ final userRepositoryProvider = Provider((ref) => UserRepository());
 final liveUserProvider = StreamProvider<UserModel?>((ref) {
   final authUser = ref.watch(currentUserProvider);
   if (authUser == null) return const Stream.empty();
-  
+
   return ref.watch(userRepositoryProvider).streamUser(authUser.userID);
 });
 
 // 3. The Controller to handle profile updates
-final userControllerProvider = NotifierProvider<UserController, AsyncValue<void>>(() {
-  return UserController();
-});
+final userControllerProvider =
+    NotifierProvider<UserController, AsyncValue<void>>(() {
+      return UserController();
+    });
 
 class UserController extends Notifier<AsyncValue<void>> {
   @override
@@ -33,7 +35,7 @@ class UserController extends Notifier<AsyncValue<void>> {
   }
 
   UserRepository get _repository => ref.read(userRepositoryProvider);
-  SmsOtpAuthService get _phoneService => SmsOtpAuthService.instance;
+  //  SmsOtpAuthService get _phoneService => SmsOtpAuthService.instance;
 
   /// A generic helper to get the current UID safely
   String _getUid() {
@@ -47,9 +49,7 @@ class UserController extends Notifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       // Just update the 'vehicle' field in the user's document
-      await _repository.updateUser(_getUid(), {
-        'vehicle': vehicle.toJson(),
-      });
+      await _repository.updateUser(_getUid(), {'vehicle': vehicle.toJson()});
       await ref.read(authControllerProvider.notifier).refreshUser();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -61,9 +61,7 @@ class UserController extends Notifier<AsyncValue<void>> {
   Future<void> updateDriverMode(DriverMode mode) async {
     state = const AsyncValue.loading();
     try {
-      await _repository.updateUser(_getUid(), {
-        'mode': mode.name,
-      });
+      await _repository.updateUser(_getUid(), {'mode': mode.name});
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -74,9 +72,7 @@ class UserController extends Notifier<AsyncValue<void>> {
   Future<void> updateRoomNumber(String room) async {
     state = const AsyncValue.loading();
     try {
-      await _repository.updateUser(_getUid(), {
-        'roomNo': room,
-      });
+      await _repository.updateUser(_getUid(), {'roomNo': room});
       await ref.read(authControllerProvider.notifier).refreshUser();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -88,9 +84,7 @@ class UserController extends Notifier<AsyncValue<void>> {
   Future<void> updateName(String newName) async {
     state = const AsyncValue.loading();
     try {
-      await _repository.updateUser(_getUid(), {
-        'name': newName,
-      });
+      await _repository.updateUser(_getUid(), {'name': newName});
       await ref.read(authControllerProvider.notifier).refreshUser();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -101,9 +95,7 @@ class UserController extends Notifier<AsyncValue<void>> {
   Future<void> updateGender(String gender) async {
     state = const AsyncValue.loading();
     try {
-      await _repository.updateUser(_getUid(), {
-        'gender': gender,
-      });
+      await _repository.updateUser(_getUid(), {'gender': gender});
       await ref.read(authControllerProvider.notifier).refreshUser();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -111,12 +103,32 @@ class UserController extends Notifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> updateDoB(String dob) async {
+  Future<void> updateWorkAddress(String address) async {
     state = const AsyncValue.loading();
     try {
-      await _repository.updateUser(_getUid(), {
-        'dob': dob,
-      });
+      // We will store the Work Address in the first index of savedLocations
+      final user = ref.read(currentUserProvider);
+      List<String> locations = List.from(user?.savedLocations ?? []);
+
+      if (locations.isEmpty) {
+        locations.add(address);
+      } else {
+        locations[0] = address;
+      }
+
+      await _repository.updateUser(_getUid(), {'savedLocations': locations});
+      await ref.read(authControllerProvider.notifier).refreshUser();
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> updateDoB(DateTime dob) async {
+    state = const AsyncValue.loading();
+    try {
+      // 1. Converts Flutter DateTime into a Firebase Timestamp to match UserModel
+      await _repository.updateUser(_getUid(), {'dob': Timestamp.fromDate(dob)});
       await ref.read(authControllerProvider.notifier).refreshUser();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -148,7 +160,7 @@ class UserController extends Notifier<AsyncValue<void>> {
 
   //     // If Firebase Auth accepts it, save it to our Firestore database
   //     await _repository.updateUser(_getUid(), {'phoneNo': newPhone});
-      
+
   //     // Sync the local app memory
   //     await ref.read(authControllerProvider.notifier).refreshUser();
 
@@ -173,7 +185,7 @@ class UserController extends Notifier<AsyncValue<void>> {
       if (result == null || result.files.single.path == null) {
         // User canceled the picker
         state = const AsyncValue.data(null);
-        return; 
+        return;
       }
 
       File file = File(result.files.single.path!);
@@ -189,14 +201,10 @@ class UserController extends Notifier<AsyncValue<void>> {
       if (isVehicleDoc) {
         // For RC, PUC, Insurance (Embedded in VehicleModel)
         // We have to update the specific key inside the embedded map
-        await _repository.updateUser(uid, {
-          'vehicle.$docType': downloadUrl,
-        });
+        await _repository.updateUser(uid, {'vehicle.$docType': downloadUrl});
       } else {
         // For Aadhar or License (Directly on UserModel)
-        await _repository.updateUser(uid, {
-          docType: downloadUrl,
-        });
+        await _repository.updateUser(uid, {docType: downloadUrl});
       }
 
       // 4. Refresh the global user state so the UI updates
