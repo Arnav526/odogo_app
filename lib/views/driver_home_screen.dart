@@ -10,7 +10,6 @@ import 'package:odogo_app/models/enums.dart';
 import 'package:odogo_app/models/trip_model.dart';
 import 'dart:async';
 
-// 1. LINKING THE PROFILE & BOOKINGS PAGES
 import 'driver_profile_screen.dart';
 import 'driver_bookings_screen.dart';
 import 'driver_active_pickup_screen.dart';
@@ -52,13 +51,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     });
   }
 
-  // --- NAVIGATION STATE ---
-  int _selectedIndex = 0; // 0 = Map, 1 = Bookings, 2 = Profile
-
-  // --- MAP STATE ---
-  // bool _isOnline = false;
-  // bool _hasIncomingRequest = false;
-  // Timer? _simulationTimer;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -67,7 +60,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   }
 
   Future<void> _startLocationStream() async {
-    // Request permission first — before checking service, so the dialog appears.
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -128,13 +120,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   }
 
   @override
-void dispose() {
-  _mapController.dispose();
-  _locationSubscription?.cancel();
-  super.dispose();
-}
+  void dispose() {
+    _mapController.dispose();
+    _locationSubscription?.cancel();
+    super.dispose();
+  }
 
-  // --- BOTTOM NAV LOGIC ---
   void _onBottomNavTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -142,18 +133,14 @@ void dispose() {
   }
 
   Future<void> _toggleOnlineState() async {
-    // 1. Get the current user to check their status
     final currentUser = ref.read(currentUserProvider);
     if (currentUser == null) return;
 
-    // 2. Determine what the NEW mode should be
     final isCurrentlyOnline = currentUser.mode == DriverMode.online;
     final newMode = isCurrentlyOnline ? DriverMode.offline : DriverMode.online;
 
-    // 3. Tell the backend to update the database
     await ref.read(userControllerProvider.notifier).updateDriverMode(newMode);
 
-    // 4. Show the SnackBar
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -163,40 +150,24 @@ void dispose() {
         ),
       );
     }
+  }
 
-  // void _acceptRide() {
-  // // Push to the active pickup screen!
-  // Navigator.push(
-  //   context,
-  //   MaterialPageRoute(builder: (context) => const DriverActivePickupScreen()),
-  // );
-  
-}
-
-  @override // Removed the duplicate @override
+  @override
   Widget build(BuildContext context) {
     _measureBottomOverlayHeight();
 
-    // WATCH THE BACKEND FOR REAL-TIME STATUS
     final currentUser = ref.watch(currentUserProvider);
     final _isOnline = currentUser?.mode == DriverMode.online;
 
-    // --- THE REAL BACKEND CONNECTION ---
-    // Watch the stream of pending trips
     final pendingTripsAsync = ref.watch(pendingTripsProvider);
-    
-    // Extract the list (default to empty if loading/error)
     final availableTrips = pendingTripsAsync.value ?? [];
-    
-    // Grab the first trip in the queue, if any exist
-    final incomingTrip = availableTrips.isNotEmpty ? availableTrips.first : null;
 
     return Scaffold(
       backgroundColor: Colors.white, 
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          _buildMapHome(_isOnline, incomingTrip),
+          _buildMapHome(_isOnline, availableTrips), 
           const DriverBookingsScreen(), 
           const DriverProfileScreen(),   
         ],
@@ -215,10 +186,7 @@ void dispose() {
     );
   }
 
-  // ==========================================
-  // VIEW 1: THE MAP DASHBOARD
-  // ==========================================
-  Widget _buildMapHome(bool _isOnline, TripModel? incomingTrip) {
+  Widget _buildMapHome(bool _isOnline, List<TripModel> availableTrips) {
     return Stack(
       children: [
         FlutterMap(
@@ -247,7 +215,6 @@ void dispose() {
               markers: [
                 Marker(
                   point: _currentLocation ?? _defaultCenter,
-                  // 1. ADJUST THESE: The total size of the circular map pin
                   width: 56, 
                   height: 56,
                   child: Container(
@@ -256,13 +223,11 @@ void dispose() {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
-                    // 2. ADJUST THIS: The spacing between the white border and the logo
                     child: Padding(
                       padding: const EdgeInsets.all(4.0), 
                       child: ClipOval(
                         child: Image.asset(
                           'assets/images/odogo_logo_black_bg.jpeg',
-                          // 3. THIS KEEPS IT FROM CLIPPING
                           fit: BoxFit.contain, 
                           errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, color: Colors.black),
                         ),
@@ -347,75 +312,91 @@ void dispose() {
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // 1. Replaced !_hasIncomingRequest with checking the real trip!
-                          if (incomingTrip == null) ...[
+                          if (availableTrips.isEmpty) ...[
                             SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: odogoGreen, strokeWidth: 2.5)),
                             const SizedBox(width: 12),
                             const Text('Searching for rides...', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
                           ] else ...[
-                            const Text('Ride Found!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white)),
+                            Text('${availableTrips.length} Ride(s) Found!', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white)),
                           ]
                         ],
                       )
                     : const Text('You are Offline', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.black)),
                 ),
               ),
-              if (incomingTrip != null) ...[
+              
+              if (_isOnline && availableTrips.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black, width: 2),
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.white,
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.45, 
                   ),
-                  child: Column(
-                    children: [
-                      const Text('Incoming Request', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 18)),
-                      const SizedBox(height: 12),
-                      // 3. Replaced hardcoded text with REAL database fields!
-                      _buildMapInfoRow('Passenger:', incomingTrip.commuterName),
-                      _buildMapInfoRow('Pickup:', incomingTrip.startLocName),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildMapInfoRow('Drop:', incomingTrip.endLocName),
-                          ElevatedButton(
-                            onPressed: () async {
-                              final currentUserName = ref.read(currentUserProvider)?.name;
-                              final currentUserId = ref.read(currentUserProvider)?.userID;
-                              if (currentUserName != null && currentUserId != null) {
-                                // 1. Execute your robust backend method
-                                await ref.read(tripControllerProvider.notifier).acceptRide(
-                                  incomingTrip.tripID,
-                                  currentUserName,
-                                  currentUserId,
-                                );
-                                
-                                // 2. Navigate away from the searching screen
-                                if (mounted) {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => DriverActivePickupScreen(
-                                        tripID: incomingTrip.tripID,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: odogoGreen, 
-                              foregroundColor: Colors.black,
-                              side: const BorderSide(color: Colors.black, width: 2),
-                              shape: const StadiumBorder(),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: availableTrips.length,
+                    itemBuilder: (context, index) {
+                      final trip = availableTrips[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black, width: 2),
+                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.white,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Center(
+                              child: Text('Incoming Request', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 16)),
                             ),
-                            child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
-                          )
-                        ],
-                      )
-                    ],
+                            const Divider(color: Colors.black12, height: 24, thickness: 1),
+                            _buildMapInfoRow('Passenger:', trip.commuterName),
+                            _buildMapInfoRow('Pickup:', trip.startLocName),
+                            _buildMapInfoRow('Drop:', trip.endLocName),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity, 
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  final currentUserName = ref.read(currentUserProvider)?.name;
+                                  final currentUserId = ref.read(currentUserProvider)?.userID;
+                                  if (currentUserName != null && currentUserId != null) {
+                                    await ref.read(tripControllerProvider.notifier).acceptRide(
+                                      trip.tripID,
+                                      currentUserName,
+                                      currentUserId,
+                                    );
+                                    
+                                    if (mounted) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => DriverActivePickupScreen(
+                                            tripID: trip.tripID,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: odogoGreen, 
+                                  foregroundColor: Colors.black,
+                                  side: const BorderSide(color: Colors.black, width: 2),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text('Accept Ride', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                              ),
+                            )
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -428,11 +409,18 @@ void dispose() {
 
   Widget _buildMapInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$label ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
-          Text(value, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 16)),
+          Text('$label ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black)),
+          Expanded(
+            child: Text(
+              value, 
+              style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 15),
+              // Let the text wrap to the next line naturally instead of cutting off
+            ),
+          ),
         ],
       ),
     );
