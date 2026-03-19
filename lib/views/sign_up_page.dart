@@ -103,6 +103,8 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
       // If it's a driver, default them to unverified initially
       verificationStatus: widget.isDriver ? false : null,
       name: name,
+      // Automatically sets new drivers to offline, and leaves commuters as null
+      mode: widget.isDriver ? DriverMode.offline : null,
     );
 
     // 3. Save to Firebase and update Riverpod State!
@@ -190,10 +192,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
               const SizedBox(height: 20),
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  'assets/images/odogo_logo.png',
-                  height: 80,
-                ),
+                child: Image.asset('assets/images/odogo_logo.png', height: 80),
               ),
               const SizedBox(height: 10),
               const Text(
