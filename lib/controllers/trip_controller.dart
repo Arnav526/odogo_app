@@ -139,12 +139,32 @@ class TripController extends Notifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       print('DEBUG: acceptRide called for tripID=$tripID, driverID=$driverID');
-      
-      // 1. Assign driver and confirm trip
-      await _repository.updateTripData(tripID, {
-        'status': TripStatus.confirmed.name,
-        'driverName': driverName,
-        'driverID': driverID,
+
+      // Use a Firestore transaction to atomically claim the trip for this driver.
+      final docRef = FirebaseFirestore.instance.collection('trips').doc(tripID);
+
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final snapshot = await tx.get(docRef);
+        if (!snapshot.exists) throw Exception('Trip not found');
+
+        final data = snapshot.data() as Map<String, dynamic>;
+        final currentStatus = data['status'] as String?;
+        final existingDriver = data['driverID'];
+
+        // Only allow claiming if there is no assigned driver and status is pending/scheduled
+        if (existingDriver == null &&
+            (currentStatus == TripStatus.pending.name ||
+                currentStatus == TripStatus.scheduled.name)) {
+          tx.update(docRef, {
+            'status': TripStatus.confirmed.name,
+            'driverName': driverName,
+            'driverID': driverID,
+          });
+        } else {
+          throw Exception(
+            'Trip already accepted by another driver or not available.',
+          );
+        }
       });
       print('DEBUG: Trip updated to confirmed');
 

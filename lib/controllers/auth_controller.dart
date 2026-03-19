@@ -314,4 +314,28 @@ class AuthController extends Notifier<AuthState> {
       state = AuthError("Failed to switch account: $e");
     }
   }
+
+  Future<void> abortSignup() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // 1. Get the email of the incomplete account
+    final activeEmail = prefs.getString('odogo_user_email');
+
+    if (activeEmail != null) {
+      // 2. Remove it from linked accounts so it doesn't become a ghost account
+      List<String> linked = List<String>.from(
+        prefs.getStringList('odogo_linked_accounts') ?? [],
+      );
+      linked.removeWhere(
+        (e) => e.trim().toLowerCase() == activeEmail.trim().toLowerCase(),
+      );
+      await prefs.setStringList('odogo_linked_accounts', linked);
+    }
+
+    // 3. Wipe the active session
+    await prefs.remove('odogo_user_email');
+
+    // 4. Drop them at the Landing Page WITHOUT auto-switching to previous accounts
+    state = AuthInitial();
+  }
 }

@@ -43,6 +43,7 @@ class _EmailEditScreenState extends ConsumerState<EmailEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.read(currentUserProvider);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -52,7 +53,10 @@ class _EmailEditScreenState extends ConsumerState<EmailEditScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Inesh', style: TextStyle(color: Colors.white)),
+        title: Text(
+          user?.name ?? 'Profile',
+          style: TextStyle(color: Colors.white),
+        ),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16.0),
@@ -61,7 +65,7 @@ class _EmailEditScreenState extends ConsumerState<EmailEditScreen> {
               backgroundColor: Color(0xFF66D2A3), // OdoGo Green
               child: Icon(Icons.person, color: Colors.white, size: 20),
             ),
-          )
+          ),
         ],
       ),
       body: SafeArea(
@@ -75,16 +79,24 @@ class _EmailEditScreenState extends ConsumerState<EmailEditScreen> {
                   Icon(Icons.email_outlined, size: 40, color: Colors.black87),
                   SizedBox(width: 12),
                   Text(
-                    'Email', 
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
+                    'Email',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 40),
-              
+
               // Loading state or the Read-Only TextField
-              _isLoading 
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF66D2A3)))
+              _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF66D2A3),
+                      ),
+                    )
                   : TextField(
                       controller: _controller,
                       readOnly: true, // Prevents typing and locks the keyboard
@@ -95,9 +107,15 @@ class _EmailEditScreenState extends ConsumerState<EmailEditScreen> {
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
                       ),
-                      style: const TextStyle(fontSize: 18, color: Colors.black87),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.black87,
+                      ),
                     ),
             ],
           ),

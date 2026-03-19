@@ -205,15 +205,14 @@ class DriverProfileScreen extends ConsumerWidget {
 
                       _buildTile(
                         context,
-                        Icons.delete_outline,
-                        'Account Deletion',
+                        Icons.power_settings_new,
+                        'Sign out',
                         isDestructive: true,
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const AccountDeletionScreen(),
+                              builder: (context) => const SignOutScreen(),
                             ),
                           );
                         },
@@ -226,14 +225,15 @@ class DriverProfileScreen extends ConsumerWidget {
 
                       _buildTile(
                         context,
-                        Icons.power_settings_new,
-                        'Sign out',
+                        Icons.delete_outline,
+                        'Account Deletion',
                         isDestructive: true,
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const SignOutScreen(),
+                              builder: (context) =>
+                                  const AccountDeletionScreen(),
                             ),
                           );
                         },

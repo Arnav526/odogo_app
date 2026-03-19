@@ -179,9 +179,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   @override
   void dispose() {
     _mapController.dispose();
-
     _locationSubscription?.cancel();
-
     super.dispose();
   }
 
@@ -231,15 +229,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     }
 
     // void _acceptRide() {
-
     // // Push to the active pickup screen!
-
     // Navigator.push(
-
-    // context,
-
-    // MaterialPageRoute(builder: (context) => const DriverActivePickupScreen()),
-
+    //   context,
+    //   MaterialPageRoute(builder: (context) => const DriverActivePickupScreen()),
     // );
   }
 
@@ -264,22 +257,18 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     final availableTrips = pendingTripsAsync.value ?? [];
 
     // Grab the first trip in the queue, if any exist
-
     final incomingTrip = availableTrips.isNotEmpty
         ? availableTrips.first
         : null;
 
     return Scaffold(
       backgroundColor: Colors.white,
-
       body: IndexedStack(
         index: _selectedIndex,
 
         children: [
           _buildMapHome(_isOnline, incomingTrip),
-
           const DriverBookingsScreen(),
-
           const DriverProfileScreen(),
         ],
       ),
@@ -298,12 +287,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             icon: Icon(Icons.home_rounded),
             label: 'Home',
           ),
-
           BottomNavigationBarItem(
             icon: Icon(Icons.confirmation_number_rounded),
             label: 'Bookings',
           ),
-
           BottomNavigationBarItem(
             icon: Icon(Icons.person_rounded),
             label: 'Profile',
@@ -345,19 +332,16 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     -0.0722,
                     0,
                     255,
-
                     -0.2126,
                     -0.7152,
                     -0.0722,
                     0,
                     255,
-
                     -0.2126,
                     -0.7152,
                     -0.0722,
                     0,
                     255,
-
                     0,
                     0,
                     0,
@@ -377,7 +361,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
                   // 1. ADJUST THESE: The total size of the circular map pin
                   width: 56,
-
                   height: 56,
 
                   child: Container(
@@ -392,14 +375,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     // 2. ADJUST THIS: The spacing between the white border and the logo
                     child: Padding(
                       padding: const EdgeInsets.all(4.0),
-
                       child: ClipOval(
                         child: Image.asset(
                           'assets/images/odogo_logo_black_bg.jpeg',
 
                           // 3. THIS KEEPS IT FROM CLIPPING
                           fit: BoxFit.contain,
-
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(
                                 Icons.broken_image,
@@ -432,13 +413,11 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     'assets/images/odogo_logo_black_bg.jpeg',
 
                     height: 40,
-
                     errorBuilder: (context, error, stackTrace) =>
                         Icon(Icons.broken_image, color: odogoGreen, size: 40),
                   ),
 
                   const SizedBox(height: 4),
-
                   const Text(
                     'OdoGo',
                     style: TextStyle(
@@ -455,17 +434,14 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 8,
                   ),
-
                   decoration: BoxDecoration(
                     color: _isOnline ? Colors.black87 : odogoGreen,
 
                     borderRadius: BorderRadius.circular(20),
-
                     border: Border.all(
                       color: _isOnline ? odogoGreen : Colors.transparent,
                       width: 2,
@@ -476,9 +452,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     children: [
                       Switch(
                         value: _isOnline,
-
                         onChanged: (v) => _toggleOnlineState(),
-
                         activeThumbColor: odogoGreen,
 
                         inactiveThumbColor: Colors.black,
@@ -498,7 +472,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-
                           Text(
                             _isOnline ? 'Offline' : 'Online',
                             style: TextStyle(
@@ -539,12 +512,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
                 decoration: BoxDecoration(
                   color: _isOnline ? odogoGreen.withOpacity(0.1) : Colors.white,
-
                   border: Border.all(
                     color: _isOnline ? odogoGreen : Colors.black,
                     width: 2,
                   ),
-
                   borderRadius: BorderRadius.circular(30),
                 ),
 
@@ -552,7 +523,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   child: _isOnline
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-
                           children: [
                             // 1. Replaced !_hasIncomingRequest with checking the real trip!
                             if (incomingTrip == null) ...[
@@ -564,9 +534,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                                   strokeWidth: 2.5,
                                 ),
                               ),
-
                               const SizedBox(width: 12),
-
                               const Text(
                                 'Searching for rides...',
                                 style: TextStyle(
@@ -622,7 +590,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                           fontSize: 18,
                         ),
                       ),
-
                       const SizedBox(height: 12),
 
                       // 3. Replaced hardcoded text with REAL database fields!
@@ -641,38 +608,49 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                               final currentUserName = ref
                                   .read(currentUserProvider)
                                   ?.name;
-
                               final currentUserId = ref
                                   .read(currentUserProvider)
                                   ?.userID;
-
                               if (currentUserName != null &&
                                   currentUserId != null) {
-                                // 1. Execute your robust backend method
-
+                                // Execute the accept flow
                                 await ref
                                     .read(tripControllerProvider.notifier)
                                     .acceptRide(
                                       incomingTrip.tripID,
-
                                       currentUserName,
-
                                       currentUserId,
                                     );
 
-                                // 2. Navigate away from the searching screen
+                                final controllerState = ref.read(
+                                  tripControllerProvider,
+                                );
 
-                                if (mounted) {
-                                  Navigator.pushReplacement(
-                                    context,
-
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          DriverActivePickupScreen(
-                                            tripID: incomingTrip.tripID,
-                                          ),
-                                    ),
-                                  );
+                                // If the controller surfaced an error, inform the driver instead of navigating.
+                                if (controllerState is AsyncError) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Could not accept ride: ${controllerState.error}',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  // Success — navigate to active pickup
+                                  if (mounted) {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            DriverActivePickupScreen(
+                                              tripID: incomingTrip.tripID,
+                                            ),
+                                      ),
+                                    );
+                                  }
                                 }
                               }
                             },
@@ -722,7 +700,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               color: Colors.black,
             ),
           ),
-
           Text(
             value,
             style: const TextStyle(

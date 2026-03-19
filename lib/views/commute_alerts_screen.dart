@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:odogo_app/controllers/auth_controller.dart';
 import '../services/notification_permission_service.dart';
 
-class CommuteAlertsScreen extends StatefulWidget {
+class CommuteAlertsScreen extends ConsumerStatefulWidget {
   const CommuteAlertsScreen({super.key});
 
   @override
-  State<CommuteAlertsScreen> createState() => _CommuteAlertsScreenState();
+  ConsumerState<CommuteAlertsScreen> createState() =>
+      _CommuteAlertsScreenState();
 }
 
-class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
+class _CommuteAlertsScreenState extends ConsumerState<CommuteAlertsScreen> {
   // Toggle state for daily route updates
   bool _notificationsEnabled = false;
   bool _isLoading = true;
   bool _isPermanentlyDenied = false;
-  
-  final NotificationPermissionService _permissionService = NotificationPermissionService();
+
+  final NotificationPermissionService _permissionService =
+      NotificationPermissionService();
 
   @override
   void initState() {
@@ -24,10 +28,13 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
 
   Future<void> _loadNotificationSettings() async {
     try {
-      final isGranted = await _permissionService.isNotificationPermissionGranted();
-      final savedPreference = await _permissionService.getNotificationPreference();
-      final isPermanentlyDenied = await _permissionService.isPermissionPermanentlyDenied();
-      
+      final isGranted = await _permissionService
+          .isNotificationPermissionGranted();
+      final savedPreference = await _permissionService
+          .getNotificationPreference();
+      final isPermanentlyDenied = await _permissionService
+          .isPermissionPermanentlyDenied();
+
       setState(() {
         // Use actual permission status if granted, otherwise use saved preference
         _notificationsEnabled = isGranted && savedPreference;
@@ -44,13 +51,16 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
     if (value) {
       // User is turning ON notifications - request permission
       if (!_isPermanentlyDenied) {
-        final granted = await _permissionService.requestNotificationPermission();
+        final granted = await _permissionService
+            .requestNotificationPermission();
         setState(() {
           _notificationsEnabled = granted;
           if (granted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Notifications enabled! You\'ll receive commute alerts.'),
+                content: Text(
+                  'Notifications enabled! You\'ll receive commute alerts.',
+                ),
                 backgroundColor: Color(0xFF66D2A3),
                 duration: Duration(seconds: 2),
               ),
@@ -58,7 +68,9 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Notification permission denied. Please enable it in settings.'),
+                content: Text(
+                  'Notification permission denied. Please enable it in settings.',
+                ),
                 backgroundColor: Colors.orange,
                 duration: Duration(seconds: 2),
               ),
@@ -85,7 +97,7 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
       // User is turning OFF notifications
       await _permissionService.disableNotifications();
       setState(() => _notificationsEnabled = false);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Notifications disabled'),
@@ -98,6 +110,7 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(currentUserProvider);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -108,7 +121,10 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Inesh', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(
+          user?.name ?? 'Profile',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16.0),
@@ -117,7 +133,7 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
               backgroundColor: Color(0xFF66D2A3), // Standard OdoGo Green
               child: Icon(Icons.person, color: Colors.white, size: 20),
             ),
-          )
+          ),
         ],
       ),
       body: SafeArea(
@@ -128,13 +144,24 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.notification_important, size: 36, color: Color.fromARGB(255, 0, 0, 0)),
+                  Icon(
+                    Icons.notification_important,
+                    size: 36,
+                    color: Color.fromARGB(255, 0, 0, 0),
+                  ),
                   SizedBox(width: 12),
-                  Text('Commute Alerts', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  Text(
+                    'Commute Alerts',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 32),
-              
+
               // Notification Toggle
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -144,21 +171,29 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: SwitchListTile(
-                        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                        title: const Text(
+                          'Notifications',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
                         subtitle: Text(
-                          _notificationsEnabled 
-                            ? 'Daily route updates enabled' 
-                            : 'Daily route updates disabled',
+                          _notificationsEnabled
+                              ? 'Daily route updates enabled'
+                              : 'Daily route updates disabled',
                         ),
                         value: _notificationsEnabled,
                         activeThumbColor: const Color(0xFF66D2A3),
-                        activeTrackColor: const Color(0xFF66D2A3).withOpacity(0.3),
+                        activeTrackColor: const Color(
+                          0xFF66D2A3,
+                        ).withOpacity(0.3),
                         onChanged: _handleNotificationToggle,
                       ),
                     ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Info box
               if (!_notificationsEnabled)
                 Container(
@@ -181,7 +216,7 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
                     ],
                   ),
                 ),
-              
+
               if (_isPermanentlyDenied)
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -200,14 +235,22 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
                           children: [
                             const Text(
                               'Permission Permanently Blocked',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             GestureDetector(
                               onTap: () => _permissionService.openSettings(),
                               child: const Text(
                                 'Open Settings to enable notifications',
-                                style: TextStyle(fontSize: 12, color: Colors.red, decoration: TextDecoration.underline),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ],
@@ -216,9 +259,9 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
                     ],
                   ),
                 ),
-              
+
               const Spacer(),
-              
+
               // Close button
               SizedBox(
                 width: double.infinity,
@@ -226,10 +269,19 @@ class _CommuteAlertsScreenState extends State<CommuteAlertsScreen> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Done', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ],

@@ -10,7 +10,7 @@ import 'bookings_screen.dart';
 import 'profile_screen.dart';
 import 'trip_confirmation_screen.dart';
 import 'schedule_booking_screen.dart';
-import 'location_permission_screen.dart'; 
+import 'location_permission_screen.dart';
 
 class CommuterHomeScreen extends ConsumerStatefulWidget {
   const CommuterHomeScreen({super.key});
@@ -45,9 +45,18 @@ class _CommuterHomeScreenState extends ConsumerState<CommuterHomeScreen> {
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.confirmation_number_rounded), label: 'Bookings'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.confirmation_number_rounded),
+            label: 'Bookings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded),
+            label: 'Profile',
+          ),
         ],
       ),
     );
@@ -64,24 +73,25 @@ class _MapHomeView extends ConsumerStatefulWidget {
   ConsumerState<_MapHomeView> createState() => _MapHomeViewState();
 }
 
-class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingObserver {
+class _MapHomeViewState extends ConsumerState<_MapHomeView>
+    with WidgetsBindingObserver {
   final MapController _mapController = MapController();
   static const LatLng _defaultCenter = LatLng(26.5123, 80.2329);
   static const double _recenterThresholdMeters = 25;
   static const double _bottomOverlayInset = 20;
-  
+
   LatLng? _currentLocation;
   LatLng? _lastRecenterLocation;
   StreamSubscription<Position>? _locationSubscription;
   final GlobalKey _bottomOverlayKey = GlobalKey();
   double _bottomOverlayHeight = 0;
-  
+
   bool _useCurrentLocationAsPickup = true;
   DropoffLocation? _selectedPickupLocation;
-  String? _customPickupName; 
-  
-  bool _isShowingPermissionScreen = false; 
-  bool _isCheckingPermission = false; 
+  String? _customPickupName;
+
+  bool _isShowingPermissionScreen = false;
+  bool _isCheckingPermission = false;
 
   double get _verticalCenterOffsetPx {
     return (_bottomOverlayHeight + _bottomOverlayInset) / 2;
@@ -90,8 +100,8 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this); 
-    _verifyLocationAccess(); 
+    WidgetsBinding.instance.addObserver(this);
+    _verifyLocationAccess();
   }
 
   @override
@@ -105,14 +115,14 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _verifyLocationAccess(); 
+      _verifyLocationAccess();
     }
   }
 
   Future<void> _verifyLocationAccess() async {
     if (_isShowingPermissionScreen || _isCheckingPermission) return;
-    
-    _isCheckingPermission = true; 
+
+    _isCheckingPermission = true;
 
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -122,59 +132,74 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
         permission = await Geolocator.requestPermission();
       }
 
-      if (!serviceEnabled || permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (!serviceEnabled ||
+          permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         if (!mounted) return;
         _isShowingPermissionScreen = true;
         _locationSubscription?.cancel();
-        
+
         await Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const LocationPermissionScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child); 
-            },
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const LocationPermissionScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
           ),
         );
-        
+
         _isShowingPermissionScreen = false;
-        
+
         permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+        if (permission == LocationPermission.whileInUse ||
+            permission == LocationPermission.always) {
           _startLocationStream();
         }
       } else {
         _startLocationStream();
       }
     } finally {
-      _isCheckingPermission = false; 
+      _isCheckingPermission = false;
     }
   }
 
   Future<void> _startLocationStream() async {
     final permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) return;
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever)
+      return;
 
-    const locationSettings = LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 3);
-    
-    _locationSubscription?.cancel(); 
-    _locationSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
-      (position) {
-        _applyLocationUpdate(LatLng(position.latitude, position.longitude));
-      },
-      onError: (_) {},
+    const locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 3,
     );
+
+    _locationSubscription?.cancel();
+    _locationSubscription =
+        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+          (position) {
+            _applyLocationUpdate(LatLng(position.latitude, position.longitude));
+          },
+          onError: (_) {},
+        );
   }
 
   void _applyLocationUpdate(LatLng location) {
     if (!mounted) return;
     setState(() => _currentLocation = location);
 
-    final shouldRecenter = _lastRecenterLocation == null ||
+    final shouldRecenter =
+        _lastRecenterLocation == null ||
         Geolocator.distanceBetween(
-          _lastRecenterLocation!.latitude, _lastRecenterLocation!.longitude,
-          location.latitude, location.longitude,
-        ) >= _recenterThresholdMeters;
+              _lastRecenterLocation!.latitude,
+              _lastRecenterLocation!.longitude,
+              location.latitude,
+              location.longitude,
+            ) >=
+            _recenterThresholdMeters;
 
     if (!shouldRecenter) return;
 
@@ -182,13 +207,17 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
-        _mapController.move(location, _mapController.camera.zoom, offset: Offset(0, -_verticalCenterOffsetPx));
+        _mapController.move(
+          location,
+          _mapController.camera.zoom,
+          offset: Offset(0, -_verticalCenterOffsetPx),
+        );
       } catch (e) {
         // Map isn't fully built yet, ignore
       }
     });
   }
-  
+
   void _measureBottomOverlayHeight() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final context = _bottomOverlayKey.currentContext;
@@ -201,9 +230,14 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
     });
   }
 
-  void _openTripConfirmation({required String destinationName, DropoffLocation? dropoff}) {
+  void _openTripConfirmation({
+    required String destinationName,
+    DropoffLocation? dropoff,
+  }) {
     final pickupPoint = _resolvedPickupPoint();
-    final dropoffPoint = dropoff == null ? null : LatLng(dropoff.latitude, dropoff.longitude);
+    final dropoffPoint = dropoff == null
+        ? null
+        : LatLng(dropoff.latitude, dropoff.longitude);
 
     Navigator.push(
       context,
@@ -220,8 +254,12 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
 
   LatLng? _resolvedPickupPoint() {
     if (_useCurrentLocationAsPickup) return _currentLocation;
-    if (_selectedPickupLocation != null) return LatLng(_selectedPickupLocation!.latitude, _selectedPickupLocation!.longitude);
-    return _currentLocation; 
+    if (_selectedPickupLocation != null)
+      return LatLng(
+        _selectedPickupLocation!.latitude,
+        _selectedPickupLocation!.longitude,
+      );
+    return _currentLocation;
   }
 
   DropoffLocation? _resolveDropoffLocation(String query) {
@@ -239,7 +277,8 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
 
   String _buildPickupLabel() {
     if (_customPickupName != null) return _customPickupName!;
-    if (!_useCurrentLocationAsPickup && _selectedPickupLocation != null) return _selectedPickupLocation!.name;
+    if (!_useCurrentLocationAsPickup && _selectedPickupLocation != null)
+      return _selectedPickupLocation!.name;
     final nearest = _nearestCampusLocationName();
     return nearest == null ? 'Near your current location' : 'Near $nearest';
   }
@@ -249,10 +288,20 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
     if (current == null || iitkDropoffLocations.isEmpty) return null;
 
     DropoffLocation nearest = iitkDropoffLocations.first;
-    double nearestDistance = Geolocator.distanceBetween(current.latitude, current.longitude, nearest.latitude, nearest.longitude);
+    double nearestDistance = Geolocator.distanceBetween(
+      current.latitude,
+      current.longitude,
+      nearest.latitude,
+      nearest.longitude,
+    );
 
     for (final location in iitkDropoffLocations.skip(1)) {
-      final distance = Geolocator.distanceBetween(current.latitude, current.longitude, location.latitude, location.longitude);
+      final distance = Geolocator.distanceBetween(
+        current.latitude,
+        current.longitude,
+        location.latitude,
+        location.longitude,
+      );
       if (distance < nearestDistance) {
         nearest = location;
         nearestDistance = distance;
@@ -264,59 +313,108 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
   // --- PICKUP SELECTOR ---
   Future<void> _openPickupSelector() async {
     String localSearchText = '';
-    
+
     final user = ref.read(currentUserProvider);
-    final homeAddress = (user?.roomNo != null && user!.roomNo!.isNotEmpty) ? user.roomNo : null;
-    final workAddress = (user?.savedLocations != null && user!.savedLocations!.isNotEmpty && user.savedLocations![0].isNotEmpty) 
-        ? user.savedLocations![0] 
+    final homeAddress = (user?.roomNo != null && user!.roomNo!.isNotEmpty)
+        ? user.roomNo
         : null;
-    
+    final workAddress =
+        (user?.savedLocations != null &&
+            user!.savedLocations!.isNotEmpty &&
+            user.savedLocations![0].isNotEmpty)
+        ? user.savedLocations![0]
+        : null;
+
     final selected = await showModalBottomSheet<dynamic>(
       context: context,
-      isScrollControlled: true, 
-      backgroundColor: Colors.transparent, 
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setSheetState) {
-            
-            List<DropoffLocation> sheetFiltered = localSearchText.isEmpty 
-              ? iitkDropoffLocations 
-              : iitkDropoffLocations.where((loc) => 
-                  loc.name.toLowerCase().contains(localSearchText.toLowerCase()) || 
-                  loc.matches(localSearchText) 
-                ).toList();
+            List<DropoffLocation> sheetFiltered = localSearchText.isEmpty
+                ? iitkDropoffLocations
+                : iitkDropoffLocations
+                      .where(
+                        (loc) =>
+                            loc.name.toLowerCase().contains(
+                              localSearchText.toLowerCase(),
+                            ) ||
+                            loc.matches(localSearchText),
+                      )
+                      .toList();
 
-            bool showHome = homeAddress != null && (localSearchText.isEmpty || 'home'.contains(localSearchText.toLowerCase()) || homeAddress.toLowerCase().contains(localSearchText.toLowerCase()));
-            bool showWork = workAddress != null && (localSearchText.isEmpty || 'work'.contains(localSearchText.toLowerCase()) || workAddress.toLowerCase().contains(localSearchText.toLowerCase()));
+            bool showHome =
+                homeAddress != null &&
+                (localSearchText.isEmpty ||
+                    'home'.contains(localSearchText.toLowerCase()) ||
+                    homeAddress.toLowerCase().contains(
+                      localSearchText.toLowerCase(),
+                    ));
+            bool showWork =
+                workAddress != null &&
+                (localSearchText.isEmpty ||
+                    'work'.contains(localSearchText.toLowerCase()) ||
+                    workAddress.toLowerCase().contains(
+                      localSearchText.toLowerCase(),
+                    ));
 
             return Padding(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), 
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
               child: Container(
-                decoration: const BoxDecoration(color: Colors.black, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                decoration: const BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
                 child: SafeArea(
                   bottom: false,
                   child: Container(
                     height: MediaQuery.of(context).size.height * 0.65,
-                    decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Padding(
                           padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
-                          child: Text('Choose Pickup Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                          child: Text(
+                            'Choose Pickup Location',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
-                        
+
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
                           child: TextField(
                             autofocus: true,
                             decoration: InputDecoration(
                               hintText: 'Search campus location...',
-                              prefixIcon: const Icon(Icons.search, color: Colors.black54),
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                color: Colors.black54,
+                              ),
                               filled: true,
                               fillColor: Colors.grey[200],
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 0,
+                              ),
                             ),
                             onChanged: (val) {
                               setSheetState(() => localSearchText = val);
@@ -325,35 +423,67 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                         ),
 
                         ListTile(
-                          leading: const Icon(Icons.my_location, color: Color(0xFF66D2A3)),
-                          title: const Text('Use current location', style: TextStyle(fontWeight: FontWeight.bold)),
+                          leading: const Icon(
+                            Icons.my_location,
+                            color: Color(0xFF66D2A3),
+                          ),
+                          title: const Text(
+                            'Use current location',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           onTap: () => Navigator.pop(sheetContext, null),
                         ),
 
                         if (showHome)
                           ListTile(
-                            leading: const Icon(Icons.home, color: Colors.black54),
-                            title: const Text('Home', style: TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(homeAddress!, style: const TextStyle(color: Colors.grey)),
-                            onTap: () => Navigator.pop(sheetContext, homeAddress),
+                            leading: const Icon(
+                              Icons.home,
+                              color: Colors.black54,
+                            ),
+                            title: const Text(
+                              'Home',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              homeAddress!,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            onTap: () =>
+                                Navigator.pop(sheetContext, homeAddress),
                           ),
-                        
+
                         if (showWork)
                           ListTile(
-                            leading: const Icon(Icons.work, color: Colors.black54),
-                            title: const Text('Work', style: TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(workAddress!, style: const TextStyle(color: Colors.grey)),
-                            onTap: () => Navigator.pop(sheetContext, workAddress),
+                            leading: const Icon(
+                              Icons.work,
+                              color: Colors.black54,
+                            ),
+                            title: const Text(
+                              'Work',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              workAddress!,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            onTap: () =>
+                                Navigator.pop(sheetContext, workAddress),
                           ),
-                        
+
                         // REMOVED custom string input tile here. Added "No Results" message.
-                        if (localSearchText.isNotEmpty && sheetFiltered.isEmpty && !showHome && !showWork)
+                        if (localSearchText.isNotEmpty &&
+                            sheetFiltered.isEmpty &&
+                            !showHome &&
+                            !showWork)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 20),
                             child: Center(
                               child: Text(
                                 'No locations found matching "$localSearchText"',
-                                style: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontStyle: FontStyle.italic,
+                                ),
                               ),
                             ),
                           ),
@@ -365,9 +495,13 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                             itemBuilder: (context, index) {
                               final location = sheetFiltered[index];
                               return ListTile(
-                                leading: const Icon(Icons.place_outlined, color: Colors.black54),
+                                leading: const Icon(
+                                  Icons.place_outlined,
+                                  color: Colors.black54,
+                                ),
                                 title: Text(location.name),
-                                onTap: () => Navigator.pop(sheetContext, location), 
+                                onTap: () =>
+                                    Navigator.pop(sheetContext, location),
                               );
                             },
                           ),
@@ -378,13 +512,13 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                 ),
               ),
             );
-          }
+          },
         );
       },
     );
 
     if (!mounted) return;
-    
+
     setState(() {
       if (selected == null) {
         _useCurrentLocationAsPickup = true;
@@ -392,14 +526,14 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
         _customPickupName = null;
       } else if (selected is String) {
         _useCurrentLocationAsPickup = false;
-        
+
         final matchedLoc = _resolveDropoffLocation(selected);
         if (matchedLoc != null) {
           _selectedPickupLocation = matchedLoc;
           _customPickupName = null;
         } else {
           _selectedPickupLocation = null;
-          _customPickupName = selected; 
+          _customPickupName = selected;
         }
       } else if (selected is DropoffLocation) {
         _useCurrentLocationAsPickup = false;
@@ -412,59 +546,108 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
   // --- DROPOFF SELECTOR ---
   Future<void> _openDropoffSelector() async {
     String localSearchText = '';
-    
+
     final user = ref.read(currentUserProvider);
-    final homeAddress = (user?.roomNo != null && user!.roomNo!.isNotEmpty) ? user.roomNo : null;
-    final workAddress = (user?.savedLocations != null && user!.savedLocations!.isNotEmpty && user.savedLocations![0].isNotEmpty) 
-        ? user.savedLocations![0] 
+    final homeAddress = (user?.roomNo != null && user!.roomNo!.isNotEmpty)
+        ? user.roomNo
         : null;
-        
+    final workAddress =
+        (user?.savedLocations != null &&
+            user!.savedLocations!.isNotEmpty &&
+            user.savedLocations![0].isNotEmpty)
+        ? user.savedLocations![0]
+        : null;
+
     final selected = await showModalBottomSheet<dynamic>(
       context: context,
-      isScrollControlled: true, 
-      backgroundColor: Colors.transparent, 
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setSheetState) {
-            
-            List<DropoffLocation> sheetFiltered = localSearchText.isEmpty 
-              ? iitkDropoffLocations 
-              : iitkDropoffLocations.where((loc) => 
-                  loc.name.toLowerCase().contains(localSearchText.toLowerCase()) || 
-                  loc.matches(localSearchText) 
-                ).toList();
+            List<DropoffLocation> sheetFiltered = localSearchText.isEmpty
+                ? iitkDropoffLocations
+                : iitkDropoffLocations
+                      .where(
+                        (loc) =>
+                            loc.name.toLowerCase().contains(
+                              localSearchText.toLowerCase(),
+                            ) ||
+                            loc.matches(localSearchText),
+                      )
+                      .toList();
 
-            bool showHome = homeAddress != null && (localSearchText.isEmpty || 'home'.contains(localSearchText.toLowerCase()) || homeAddress.toLowerCase().contains(localSearchText.toLowerCase()));
-            bool showWork = workAddress != null && (localSearchText.isEmpty || 'work'.contains(localSearchText.toLowerCase()) || workAddress.toLowerCase().contains(localSearchText.toLowerCase()));
+            bool showHome =
+                homeAddress != null &&
+                (localSearchText.isEmpty ||
+                    'home'.contains(localSearchText.toLowerCase()) ||
+                    homeAddress.toLowerCase().contains(
+                      localSearchText.toLowerCase(),
+                    ));
+            bool showWork =
+                workAddress != null &&
+                (localSearchText.isEmpty ||
+                    'work'.contains(localSearchText.toLowerCase()) ||
+                    workAddress.toLowerCase().contains(
+                      localSearchText.toLowerCase(),
+                    ));
 
             return Padding(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), 
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
               child: Container(
-                decoration: const BoxDecoration(color: Colors.black, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                decoration: const BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
                 child: SafeArea(
                   bottom: false,
                   child: Container(
                     height: MediaQuery.of(context).size.height * 0.65,
-                    decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Padding(
                           padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
-                          child: Text('Choose Dropoff Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                          child: Text(
+                            'Choose Dropoff Location',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
-                        
+
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
                           child: TextField(
                             autofocus: true,
                             decoration: InputDecoration(
                               hintText: 'Search campus destination...',
-                              prefixIcon: const Icon(Icons.search, color: Colors.black54),
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                color: Colors.black54,
+                              ),
                               filled: true,
                               fillColor: Colors.grey[200],
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 0,
+                              ),
                             ),
                             onChanged: (val) {
                               setSheetState(() => localSearchText = val);
@@ -474,28 +657,54 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
 
                         if (showHome)
                           ListTile(
-                            leading: const Icon(Icons.home, color: Colors.black54),
-                            title: const Text('Home', style: TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(homeAddress!, style: const TextStyle(color: Colors.grey)),
-                            onTap: () => Navigator.pop(sheetContext, homeAddress),
+                            leading: const Icon(
+                              Icons.home,
+                              color: Colors.black54,
+                            ),
+                            title: const Text(
+                              'Home',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              homeAddress!,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            onTap: () =>
+                                Navigator.pop(sheetContext, homeAddress),
                           ),
-                        
+
                         if (showWork)
                           ListTile(
-                            leading: const Icon(Icons.work, color: Colors.black54),
-                            title: const Text('Work', style: TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(workAddress!, style: const TextStyle(color: Colors.grey)),
-                            onTap: () => Navigator.pop(sheetContext, workAddress),
+                            leading: const Icon(
+                              Icons.work,
+                              color: Colors.black54,
+                            ),
+                            title: const Text(
+                              'Work',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              workAddress!,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            onTap: () =>
+                                Navigator.pop(sheetContext, workAddress),
                           ),
-                        
+
                         // REMOVED custom string input tile here. Added "No Results" message.
-                        if (localSearchText.isNotEmpty && sheetFiltered.isEmpty && !showHome && !showWork)
+                        if (localSearchText.isNotEmpty &&
+                            sheetFiltered.isEmpty &&
+                            !showHome &&
+                            !showWork)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 20),
                             child: Center(
                               child: Text(
                                 'No locations found matching "$localSearchText"',
-                                style: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontStyle: FontStyle.italic,
+                                ),
                               ),
                             ),
                           ),
@@ -507,9 +716,13 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                             itemBuilder: (context, index) {
                               final location = sheetFiltered[index];
                               return ListTile(
-                                leading: const Icon(Icons.place_outlined, color: Colors.black54),
+                                leading: const Icon(
+                                  Icons.place_outlined,
+                                  color: Colors.black54,
+                                ),
                                 title: Text(location.name),
-                                onTap: () => Navigator.pop(sheetContext, location), 
+                                onTap: () =>
+                                    Navigator.pop(sheetContext, location),
                               );
                             },
                           ),
@@ -520,18 +733,18 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                 ),
               ),
             );
-          }
+          },
         );
       },
     );
 
     if (!mounted || selected == null) return;
-    
+
     if (selected is String) {
       final matchedDropoff = _resolveDropoffLocation(selected);
       _openTripConfirmation(
-        destinationName: matchedDropoff?.name ?? selected, 
-        dropoff: matchedDropoff
+        destinationName: matchedDropoff?.name ?? selected,
+        dropoff: matchedDropoff,
       );
     } else if (selected is DropoffLocation) {
       _openTripConfirmation(destinationName: selected.name, dropoff: selected);
@@ -557,10 +770,26 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
               tileBuilder: (context, tileWidget, tile) {
                 return ColorFiltered(
                   colorFilter: const ColorFilter.matrix([
-                    -0.2126, -0.7152, -0.0722, 0, 255,
-                    -0.2126, -0.7152, -0.0722, 0, 255,
-                    -0.2126, -0.7152, -0.0722, 0, 255,
-                    0, 0, 0, 1, 0,
+                    -0.2126,
+                    -0.7152,
+                    -0.0722,
+                    0,
+                    255,
+                    -0.2126,
+                    -0.7152,
+                    -0.0722,
+                    0,
+                    255,
+                    -0.2126,
+                    -0.7152,
+                    -0.0722,
+                    0,
+                    255,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
                   ]),
                   child: tileWidget,
                 );
@@ -579,7 +808,11 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
                       ),
-                      child: const Icon(Icons.my_location, color: Colors.black, size: 18),
+                      child: const Icon(
+                        Icons.my_location,
+                        color: Colors.black,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ],
@@ -596,18 +829,39 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                 Image.asset(
                   'assets/images/odogo_logo_black_bg.jpeg',
                   height: 50,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.local_taxi, color: Colors.greenAccent, size: 40),
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.local_taxi,
+                    color: Colors.greenAccent,
+                    size: 40,
+                  ),
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ScheduleBookingScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ScheduleBookingScreen(),
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.calendar_month, color: Colors.black),
-                  label: const Text('Schedule\nbookings', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'Schedule\nbookings',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF66D2A3),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                   ),
                 ),
               ],
@@ -624,7 +878,13 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.all(Radius.circular(24)),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
             width: MediaQuery.of(context).size.width * 0.92,
             child: Column(
@@ -633,7 +893,10 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8F6F6),
                     borderRadius: BorderRadius.circular(14),
@@ -648,7 +911,11 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                           'Pickup: ${_buildPickupLabel()}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black87),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                       TextButton(
@@ -658,12 +925,15 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                     ],
                   ),
                 ),
-                
+
                 GestureDetector(
                   onTap: _openDropoffSelector,
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8F6F6),
                       borderRadius: BorderRadius.circular(14),
@@ -678,7 +948,11 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView> with WidgetsBindingO
                             'Dropoff',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black87),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
                           ),
                         ),
                         TextButton(

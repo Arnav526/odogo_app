@@ -9,6 +9,7 @@ class SignOutScreen extends ConsumerWidget {
   @override
   // 4. Added WidgetRef ref to the build method
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -18,8 +19,8 @@ class SignOutScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Inesh',
+        title: Text(
+          user?.name ?? 'Profile',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: const [

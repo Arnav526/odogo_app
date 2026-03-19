@@ -181,7 +181,8 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           // Logs out and kicks them to the login screen
-          onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+          onPressed: () =>
+              ref.read(authControllerProvider.notifier).abortSignup(),
         ),
       ),
       body: SafeArea(
