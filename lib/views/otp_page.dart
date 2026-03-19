@@ -285,19 +285,6 @@ class _OtpPageState extends ConsumerState<OtpPage> {
   final TextEditingController _otpController = TextEditingController();
   bool _isLoading = false;
 
-  String _extractErrorMessage(Object error) {
-    if (error is StateError) {
-      return error.message;
-    }
-
-    final raw = error.toString();
-    if (raw.startsWith('Exception: ')) {
-      return raw.replaceFirst('Exception: ', '').trim();
-    }
-
-    return raw;
-  }
-
   @override
   void dispose() {
     _otpController.dispose();
@@ -353,8 +340,13 @@ class _OtpPageState extends ConsumerState<OtpPage> {
     if (authState is AuthError) {
       _showError(authState.message);
     } else if (authState is AuthNeedsProfileSetup) {
-      // Use GoRouter to go to setup, passing the isDriver flag as an "extra" argument
-      context.go('/setup', extra: widget.isDriver);
+      context.go(
+        '/account-not-found',
+        extra: {
+          'isDriver': widget.isDriver,
+          'email': widget.email,
+        },
+      );
     }
     // Notice what's missing?
     // If it's AuthAuthenticated, WE DO NOTHING!

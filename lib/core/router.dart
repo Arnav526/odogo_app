@@ -122,6 +122,7 @@ import '../views/sign_up_page.dart';
 import '../views/commuter_home.dart';
 import '../views/driver_home_screen.dart';
 import '../views/driver_document_upload_screen.dart';
+import '../views/account_not_found_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final routerNotifier = ValueNotifier<AuthState>(
@@ -188,7 +189,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       final isUnauthRoute =
-          path == '/login' || path == '/sign-in' || path == '/otp';
+          path == '/login' ||
+          path == '/sign-in' ||
+          path == '/otp' ||
+          path == '/account-not-found';
 
       if (authState is AuthInitial ||
           authState is AuthError ||
@@ -219,7 +223,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (authState is AuthNeedsProfileSetup) {
-        return path == '/setup' ? null : '/setup';
+        return (path == '/setup' || path == '/account-not-found')
+            ? null
+            : '/account-not-found';
       }
 
       return null;
@@ -252,6 +258,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           return OtpPage(
             isDriver: args['isDriver'] ?? false,
             isSignUp: args['isSignUp'] ?? false,
+            email: args['email'] ?? '',
+          );
+        },
+      ),
+      GoRoute(
+        path: '/account-not-found',
+        builder: (context, state) {
+          final args = state.extra as Map<String, dynamic>? ?? {};
+          return AccountNotFoundScreen(
+            isDriver: args['isDriver'] ?? false,
             email: args['email'] ?? '',
           );
         },
