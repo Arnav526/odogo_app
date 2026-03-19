@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odogo_app/controllers/auth_controller.dart';
 import 'package:odogo_app/models/enums.dart';
+import '../models/user_model.dart';
 import '../models/trip_model.dart';
 import '../repositories/trip_repository.dart';
 
@@ -67,6 +68,47 @@ final tripControllerProvider =
       return TripController();
     });
 
+// 1. Fetches specific user details (like phone numbers) on the fly
+final userInfoProvider = FutureProvider.family<UserModel?, String>((
+  ref,
+  uid,
+) async {
+  if (uid.isEmpty) return null;
+  return await ref.read(userRepositoryProvider).getUser(uid);
+});
+
+// 2. Centralized Commuter Trips Stream
+final commuterTripsProvider = StreamProvider.autoDispose<List<TripModel>>((
+  ref,
+) {
+  final currentUser = ref.watch(currentUserProvider);
+  if (currentUser == null) return Stream.value([]);
+
+  return FirebaseFirestore.instance
+      .collection('trips')
+      .where('commuterID', isEqualTo: currentUser.userID)
+      .snapshots()
+      .map(
+        (snapshot) =>
+            snapshot.docs.map((doc) => TripModel.fromJson(doc.data())).toList(),
+      );
+});
+
+// 3. Centralized Driver Trips Stream
+final driverTripsProvider = StreamProvider.autoDispose<List<TripModel>>((ref) {
+  final currentUser = ref.watch(currentUserProvider);
+  if (currentUser == null) return Stream.value([]);
+
+  return FirebaseFirestore.instance
+      .collection('trips')
+      .where('driverID', isEqualTo: currentUser.userID)
+      .snapshots()
+      .map(
+        (snapshot) =>
+            snapshot.docs.map((doc) => TripModel.fromJson(doc.data())).toList(),
+      );
+});
+
 // 2. UPDATED to Notifier
 class TripController extends Notifier<AsyncValue<void>> {
   // 3. Notifiers use build() to set the initial state instead of super()
@@ -89,7 +131,11 @@ class TripController extends Notifier<AsyncValue<void>> {
   }
 
   /// Driver: Accepts a pending ride
-  Future<void> acceptRide(String tripID, String driverName, String driverID) async {
+  Future<void> acceptRide(
+    String tripID,
+    String driverName,
+    String driverID,
+  ) async {
     state = const AsyncValue.loading();
     try {
       // 1. Assign driver and confirm trip
@@ -249,6 +295,13 @@ class TripController extends Notifier<AsyncValue<void>> {
             'mode': DriverMode.online.name,
           });
         }
+
+        // Trigger Background Cleanup ---
+        final commuterID = tripData['commuterID'];
+        if (commuterID != null)
+          _repository.cleanupOldTrips(commuterID, 'commuterID');
+        if (assignedDriverID != null)
+          _repository.cleanupOldTrips(assignedDriverID, 'driverID');
       }
 
       // Sync the state (especially critical if this user is the driver transitioning back to online)
