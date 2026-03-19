@@ -163,22 +163,6 @@ void dispose() {
         ),
       );
     }
-
-    // // 5. Handle your simulation timer based on the new mode
-    // if (newMode == DriverMode.online) {
-    //   _simulationTimer = Timer(const Duration(seconds: 4), () {
-    //     if (mounted && ref.read(currentUserProvider)?.mode == DriverMode.online) {
-    //       setState(() {
-    //         _hasIncomingRequest = true;
-    //       });
-    //     }
-    //   });
-    // } else {
-    //   setState(() {
-    //     _hasIncomingRequest = false;
-    //   });
-    //   _simulationTimer?.cancel();
-    // }
   }
 
   void _acceptRide() {
