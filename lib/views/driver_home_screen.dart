@@ -145,6 +145,17 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     });
   }
 
+  DateTime _queueTimestampForTrip(TripModel trip) {
+    final tripIdAsEpoch = int.tryParse(trip.tripID);
+    if (tripIdAsEpoch != null) {
+      return DateTime.fromMillisecondsSinceEpoch(tripIdAsEpoch);
+    }
+    if (trip.scheduledTime != null) {
+      return trip.scheduledTime!.toDate();
+    }
+    return DateTime.fromMillisecondsSinceEpoch(8640000000000000);
+  }
+
   Future<void> _toggleOnlineState() async {
     // 1. Get the current user to check their status
 
@@ -259,12 +270,11 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
     // Extract the list (default to empty if loading/error)
 
-    final availableTrips = pendingTripsAsync.value ?? [];
-
-    // Grab the first trip in the queue, if any exist
-    final incomingTrip = availableTrips.isNotEmpty
-        ? availableTrips.first
-        : null;
+    final List<TripModel> availableTrips = List<TripModel>.from(
+      pendingTripsAsync.value ?? const <TripModel>[],
+    )..sort(
+      (a, b) => _queueTimestampForTrip(a).compareTo(_queueTimestampForTrip(b)),
+    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -272,7 +282,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         index: _selectedIndex,
 
         children: [
-          _buildMapHome(_isOnline, incomingTrip),
+          _buildMapHome(_isOnline, availableTrips),
           const DriverBookingsScreen(),
           const DriverProfileScreen(),
         ],
@@ -311,7 +321,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   // ==========================================
 
-  Widget _buildMapHome(bool _isOnline, TripModel? incomingTrip) {
+  Widget _buildMapHome(bool _isOnline, List<TripModel> incomingTrips) {
+    final hasIncomingTrips = incomingTrips.isNotEmpty;
+
     return Stack(
       children: [
         FlutterMap(
@@ -529,7 +541,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            if (incomingTrip == null) ...[
+                            if (!hasIncomingTrips) ...[
                               SizedBox(
                                 width: 18,
                                 height: 18,
@@ -570,7 +582,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 ),
               ),
 
-              if (incomingTrip != null) ...[
+              if (hasIncomingTrips) ...[
                 const SizedBox(height: 16),
 
                 Container(
@@ -585,122 +597,60 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   ),
 
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Incoming Request',
-                        style: TextStyle(
+                      Text(
+                        'Incoming Requests (${incomingTrips.length})',
+                        style: const TextStyle(
                           color: Colors.grey,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
                       ),
                       const SizedBox(height: 12),
-
-                      // 3. Replaced hardcoded text with REAL database fields!
-                      _buildMapInfoRow('Passenger:', incomingTrip.commuterName),
-
-                      _buildMapInfoRow('Pickup:', incomingTrip.startLocName),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                        children: [
-                          Expanded(
-                            child: _buildMapInfoRow('Drop:', incomingTrip.endLocName),
-                          ),
-                          const SizedBox(width: 12),
-
-                          ElevatedButton(
-                            onPressed: () async {
-                              final currentUserName = ref
-                                  .read(currentUserProvider)
-                                  ?.name;
-                              final currentUserId = ref
-                                  .read(currentUserProvider)
-                                  ?.userID;
-                              if (currentUserName != null &&
-                                  currentUserId != null) {
-                                // Execute the accept flow
-                                await ref
-                                    .read(tripControllerProvider.notifier)
-                                    .acceptRide(
-                                      incomingTrip.tripID,
-                                      currentUserName,
-                                      currentUserId,
-                                      isScheduled:
-                                          incomingTrip.status ==
-                                          TripStatus.scheduled,
-                                    );
-
-                                final controllerState = ref.read(
-                                  tripControllerProvider,
-                                );
-
-                                // If the controller surfaced an error, inform the driver instead of navigating.
-                                if (controllerState is AsyncError) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Could not accept ride: ${controllerState.error}',
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.32,
+                        ),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: incomingTrips.length,
+                          separatorBuilder: (_, __) => const Divider(height: 20),
+                          itemBuilder: (context, index) {
+                            final incomingTrip = incomingTrips[index];
+                            return Column(
+                              children: [
+                                _buildMapInfoRow('Passenger:', incomingTrip.commuterName),
+                                _buildMapInfoRow('Pickup:', incomingTrip.startLocName),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: _buildMapInfoRow('Drop:', incomingTrip.endLocName),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    ElevatedButton(
+                                      onPressed: () => _acceptIncomingTrip(incomingTrip),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: odogoGreen,
+                                        foregroundColor: Colors.black,
+                                        side: const BorderSide(
+                                          color: Colors.black,
+                                          width: 2,
                                         ),
-                                        backgroundColor: Colors.red,
+                                        shape: const StadiumBorder(),
                                       ),
-                                    );
-                                  }
-                                } else {
-                                  // --- UPDATED SUCCESS LOGIC ---
-                                  if (mounted) {
-                                    if (incomingTrip.status ==
-                                        TripStatus.scheduled) {
-                                      // 1. Scheduled Ride: Show Snackbar ONLY, do not navigate!
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Scheduled Ride Accepted! View it in Upcoming Bookings.',
-                                          ),
-                                          backgroundColor: Color(0xFF66D2A3),
-                                          duration: Duration(seconds: 3),
-                                        ),
-                                      );
-                                    } else {
-                                      // 2. Immediate Ride: Navigate to active pickup
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              DriverActivePickupScreen(
-                                                tripID: incomingTrip.tripID,
-                                              ),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                }
-                              }
-                            },
-
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: odogoGreen,
-
-                              foregroundColor: Colors.black,
-
-                              side: const BorderSide(
-                                color: Colors.black,
-                                width: 2,
-                              ),
-
-                              shape: const StadiumBorder(),
-                            ),
-
-                            child: const Text(
-                              'Accept',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
+                                      child: const Text(
+                                        'Accept',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -710,6 +660,57 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _acceptIncomingTrip(TripModel incomingTrip) async {
+    final currentUserName = ref.read(currentUserProvider)?.name;
+    final currentUserId = ref.read(currentUserProvider)?.userID;
+    if (currentUserName == null || currentUserId == null) {
+      return;
+    }
+
+    await ref.read(tripControllerProvider.notifier).acceptRide(
+      incomingTrip.tripID,
+      currentUserName,
+      currentUserId,
+      isScheduled: incomingTrip.status == TripStatus.scheduled,
+    );
+
+    final controllerState = ref.read(tripControllerProvider);
+
+    if (controllerState is AsyncError) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not accept ride: ${controllerState.error}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    if (incomingTrip.status == TripStatus.scheduled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Scheduled Ride Accepted! View it in Upcoming Bookings.',
+          ),
+          backgroundColor: Color(0xFF66D2A3),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DriverActivePickupScreen(
+          tripID: incomingTrip.tripID,
+        ),
+      ),
     );
   }
 
