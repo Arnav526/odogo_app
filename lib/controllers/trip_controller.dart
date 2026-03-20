@@ -329,11 +329,11 @@ class TripController extends Notifier<AsyncValue<void>> {
         }
 
         // Trigger Background Cleanup ---
-        final commuterID = tripData['commuterID'];
-        if (commuterID != null)
-          _repository.cleanupOldTrips(commuterID, 'commuterID');
-        if (assignedDriverID != null)
-          _repository.cleanupOldTrips(assignedDriverID, 'driverID');
+      //   final commuterID = tripData['commuterID'];
+      //   if (commuterID != null)
+      //     _repository.cleanupOldTrips(commuterID, 'commuterID');
+      //   if (assignedDriverID != null)
+      //     _repository.cleanupOldTrips(assignedDriverID, 'driverID');
       }
 
       // Sync the state (especially critical if this user is the driver transitioning back to online)

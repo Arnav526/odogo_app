@@ -3,20 +3,24 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
+import 'package:odogo_app/controllers/trip_controller.dart';
+import 'package:odogo_app/views/trip_end_request_screen.dart';
 
-class PickupConfirmedScreen extends StatefulWidget {
+class PickupConfirmedScreen extends ConsumerStatefulWidget {
   final LatLng? dropoffPoint;
+  final String tripID;
 
-  const PickupConfirmedScreen({super.key, this.dropoffPoint});
+  const PickupConfirmedScreen({super.key, required this.tripID, this.dropoffPoint});
 
   @override
-  State<PickupConfirmedScreen> createState() => _PickupConfirmedScreenState();
+  ConsumerState<PickupConfirmedScreen> createState() => _PickupConfirmedScreenState();
 }
 
-class _PickupConfirmedScreenState extends State<PickupConfirmedScreen> {
+class _PickupConfirmedScreenState extends ConsumerState<PickupConfirmedScreen> {
   final Color odogoGreen = const Color(0xFF66D2A3);
   static const LatLng _fallbackUserLocation = LatLng(26.5123, 80.2329);
   static const LatLng _fallbackDropoffLocation = LatLng(26.5170, 80.2310);
@@ -311,6 +315,18 @@ class _PickupConfirmedScreenState extends State<PickupConfirmedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(activeTripStreamProvider(widget.tripID), (previous, next) {
+      final trip = next.value;
+      if (trip != null && trip.driverEnd == true) { 
+        // Instantly push the commuter to the final confirmation screen!
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TripEndRequestScreen(tripID: widget.tripID), // Make sure to update this screen to accept the ID too!
+          ),
+        );
+      }
+    });
     final routePoints = _polylinePoints();
     final mapKey =
         '${routePoints.length}-${_userLocation.latitude.toStringAsFixed(5)}-${_userLocation.longitude.toStringAsFixed(5)}-${_bottomCardHeight.round()}';

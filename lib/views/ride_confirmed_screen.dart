@@ -181,7 +181,6 @@ class _RideConfirmedScreenState extends ConsumerState<RideConfirmedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // THE SMART LISTENER FOR THE COMMUTER
     ref.listen(activeTripStreamProvider(widget.tripID), (previous, next) {
       final trip = next.value;
       if (trip == null) return;
@@ -217,10 +216,10 @@ class _RideConfirmedScreenState extends ConsumerState<RideConfirmedScreen> {
       }
 
       // If driver starts the ride, proceed to the active trip screen
-      if (trip.status == TripStatus.ongoing) { 
+      else if (trip.status == TripStatus.ongoing) { 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => PickupConfirmedScreen(dropoffPoint: _dropoffLocation)),
+          MaterialPageRoute(builder: (context) => PickupConfirmedScreen(tripID: widget.tripID, dropoffPoint: _dropoffLocation),),
         );
       }
     });

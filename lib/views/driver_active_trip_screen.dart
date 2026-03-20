@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:odogo_app/controllers/trip_controller.dart';
 import 'package:odogo_app/models/enums.dart';
+import 'package:odogo_app/views/driver_home_screen.dart';
 
 class DriverActiveTripScreen extends ConsumerStatefulWidget {
   final LatLng pickupLocation;
@@ -282,7 +283,13 @@ class _DriverActiveTripScreenState extends ConsumerState<DriverActiveTripScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Trip Officially Completed!'), backgroundColor: Colors.green),
           );
-          Navigator.popUntil(context, (route) => route.isFirst);
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const DriverHomeScreen(), // Make sure this matches your home screen's exact name
+            ),
+            (route) => false, // This "false" is what destroys the old route history
+          );
         }
       }
     });
