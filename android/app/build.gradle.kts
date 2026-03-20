@@ -47,6 +47,15 @@ flutter {
     source = "../.."
 }
 
+// Workaround for intermittent AGP validation failures where
+// createDebugApkListingFileRedirect runs with missing output-metadata.json.
+afterEvaluate {
+    tasks.findByName("createDebugApkListingFileRedirect")?.apply {
+        dependsOn("packageDebug")
+        mustRunAfter("packageDebug")
+    }
+}
+
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

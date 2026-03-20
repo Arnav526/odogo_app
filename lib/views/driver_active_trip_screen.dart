@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:odogo_app/controllers/trip_controller.dart';
 import 'package:odogo_app/models/enums.dart';
+import 'package:odogo_app/services/contact_launcher_service.dart';
 import 'package:odogo_app/views/driver_home_screen.dart';
 
 class DriverActiveTripScreen extends ConsumerStatefulWidget {
@@ -295,6 +296,8 @@ class _DriverActiveTripScreenState extends ConsumerState<DriverActiveTripScreen>
     });
     final activeTripAsync = ref.watch(activeTripStreamProvider(widget.tripID));
     final trip = activeTripAsync.value;
+    final commuterInfoAsync = ref.watch(userInfoProvider(trip?.commuterID ?? ''));
+    final commuterPhone = commuterInfoAsync.value?.phoneNo;
     final polylinePoints = _polylinePoints;
     _measureBottomCardHeight();
 
@@ -478,11 +481,11 @@ class _DriverActiveTripScreenState extends ConsumerState<DriverActiveTripScreen>
                       ),
                       IconButton(
                         icon: Icon(Icons.phone_in_talk, color: Colors.grey[700]),
-                        onPressed: () {},
+                        onPressed: () => ContactLauncherService.callNumber(context, commuterPhone),
                       ),
                       IconButton(
                         icon: Icon(Icons.chat_bubble_outline, color: Colors.grey[700]),
-                        onPressed: () {},
+                        onPressed: () => ContactLauncherService.smsNumber(context, commuterPhone),
                       ),
                     ],
                   ),

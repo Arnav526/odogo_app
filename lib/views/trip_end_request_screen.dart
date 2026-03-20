@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:odogo_app/controllers/trip_controller.dart';
+import 'package:odogo_app/services/contact_launcher_service.dart';
 
 class TripEndRequestScreen extends ConsumerWidget {
   final String tripID;
@@ -13,6 +14,8 @@ class TripEndRequestScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeTripAsync = ref.watch(activeTripStreamProvider(tripID));
     final trip = activeTripAsync.value;
+    final driverInfoAsync = ref.watch(userInfoProvider(trip?.driverID ?? ''));
+    final driverPhone = driverInfoAsync.value?.phoneNo;
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -176,8 +179,14 @@ class TripEndRequestScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        IconButton(onPressed: () {}, icon: const Icon(Icons.phone_outlined, color: Colors.black54)),
-                        IconButton(onPressed: () {}, icon: const Icon(Icons.chat_bubble_outline, color: Colors.black54)),
+                        IconButton(
+                          onPressed: () => ContactLauncherService.callNumber(context, driverPhone),
+                          icon: const Icon(Icons.phone_outlined, color: Colors.black54),
+                        ),
+                        IconButton(
+                          onPressed: () => ContactLauncherService.smsNumber(context, driverPhone),
+                          icon: const Icon(Icons.chat_bubble_outline, color: Colors.black54),
+                        ),
                       ],
                     ),
                   ),

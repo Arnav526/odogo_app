@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:odogo_app/controllers/trip_controller.dart';
 import 'package:odogo_app/models/enums.dart';
+import 'package:odogo_app/services/contact_launcher_service.dart';
 
 import 'commuter_cancel_confirmation_screen.dart';
 import 'pickup_confirmed_screen.dart';
@@ -226,6 +227,8 @@ class _RideConfirmedScreenState extends ConsumerState<RideConfirmedScreen> {
 
     final activeTripAsync = ref.watch(activeTripStreamProvider(widget.tripID));
     final trip = activeTripAsync.value;
+    final driverInfoAsync = ref.watch(userInfoProvider(trip?.driverID ?? ''));
+    final driverPhone = driverInfoAsync.value?.phoneNo;
     final routePoints = _polylinePoints();
     final mapKey = '${routePoints.length}-${_currentLocation.latitude.toStringAsFixed(5)}-${_currentLocation.longitude.toStringAsFixed(5)}';
 
@@ -413,12 +416,18 @@ class _RideConfirmedScreenState extends ConsumerState<RideConfirmedScreen> {
                       ),
                       Container(
                         decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-                        child: IconButton(onPressed: () {}, icon: const Icon(Icons.phone_in_talk, color: Colors.black87)),
+                        child: IconButton(
+                          onPressed: () => ContactLauncherService.callNumber(context, driverPhone),
+                          icon: const Icon(Icons.phone_in_talk, color: Colors.black87),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Container(
                         decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-                        child: IconButton(onPressed: () {}, icon: const Icon(Icons.message_rounded, color: Colors.black87)),
+                        child: IconButton(
+                          onPressed: () => ContactLauncherService.smsNumber(context, driverPhone),
+                          icon: const Icon(Icons.message_rounded, color: Colors.black87),
+                        ),
                       ),
                     ],
                   ),

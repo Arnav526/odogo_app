@@ -11,6 +11,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:odogo_app/controllers/trip_controller.dart';
 import 'package:odogo_app/models/enums.dart';
 import 'package:odogo_app/models/trip_model.dart';
+import 'package:odogo_app/services/contact_launcher_service.dart';
 import 'package:odogo_app/views/driver_home_screen.dart';
 import 'driver_active_trip_screen.dart';
 import 'driver_cancel_confirmation_screen.dart';
@@ -344,6 +345,8 @@ class _DriverActivePickupScreenState extends ConsumerState<DriverActivePickupScr
     // Watch the database for this specific trip
     final activeTripAsync = ref.watch(activeTripStreamProvider(widget.tripID));
     final trip = activeTripAsync.value;
+    final commuterInfoAsync = ref.watch(userInfoProvider(trip?.commuterID ?? ''));
+    final commuterPhone = commuterInfoAsync.value?.phoneNo;
 
     ref.listen<AsyncValue<TripModel?>>(activeTripStreamProvider(widget.tripID), (previous, next) {
       final currentTrip = next.value;
@@ -523,8 +526,14 @@ class _DriverActivePickupScreenState extends ConsumerState<DriverActivePickupScr
                           ],
                         ),
                       ),
-                      IconButton(icon: Icon(Icons.phone_in_talk, color: Colors.grey[700]), onPressed: () {}),
-                      IconButton(icon: Icon(Icons.chat_bubble_outline, color: Colors.grey[700]), onPressed: () {}),
+                      IconButton(
+                        icon: Icon(Icons.phone_in_talk, color: Colors.grey[700]),
+                        onPressed: () => ContactLauncherService.callNumber(context, commuterPhone),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.chat_bubble_outline, color: Colors.grey[700]),
+                        onPressed: () => ContactLauncherService.smsNumber(context, commuterPhone),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),

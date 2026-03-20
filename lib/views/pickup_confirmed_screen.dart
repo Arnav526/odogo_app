@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:odogo_app/controllers/trip_controller.dart';
+import 'package:odogo_app/services/contact_launcher_service.dart';
 import 'package:odogo_app/views/trip_end_request_screen.dart';
 
 class PickupConfirmedScreen extends ConsumerStatefulWidget {
@@ -284,6 +285,8 @@ class _PickupConfirmedScreenState extends ConsumerState<PickupConfirmedScreen> {
     });
     final activeTripAsync = ref.watch(activeTripStreamProvider(widget.tripID));
     final trip = activeTripAsync.value;
+    final driverInfoAsync = ref.watch(userInfoProvider(trip?.driverID ?? ''));
+    final driverPhone = driverInfoAsync.value?.phoneNo;
     final routePoints = _polylinePoints();
     final mapKey =
         '${routePoints.length}-${_userLocation.latitude.toStringAsFixed(5)}-${_userLocation.longitude.toStringAsFixed(5)}-${_bottomCardHeight.round()}';
@@ -480,11 +483,11 @@ class _PickupConfirmedScreenState extends ConsumerState<PickupConfirmedScreen> {
                       ),
                       IconButton(
                         icon: Icon(Icons.phone_in_talk, color: Colors.grey[700]),
-                        onPressed: () {},
+                        onPressed: () => ContactLauncherService.callNumber(context, driverPhone),
                       ),
                       IconButton(
                         icon: Icon(Icons.chat_bubble_outline, color: Colors.grey[700]),
-                        onPressed: () {},
+                        onPressed: () => ContactLauncherService.smsNumber(context, driverPhone),
                       ),
                     ],
                   ),
