@@ -129,21 +129,6 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
           backgroundColor: Color(0xFF66D2A3),
         ),
       );
-
-      // --- DRIVER ROUTING EDGE CASE ---
-      // If they are a driver, GoRouter is going to instantly teleport them to '/driver-home'
-      // because the state is now AuthAuthenticated.
-      // If you want them to upload docs FIRST, you should push them to that screen here,
-      // OR better yet, let them go to the driver home screen and pop up a "Please upload docs"
-      // modal based on their `verificationStatus == false`.
-      // if (widget.isDriver) {
-      //   Navigator.push(
-      //     context,
-      //     MaterialPageRoute(
-      //       builder: (context) => const DriverDocumentUploadScreen(),
-      //     ),
-      //   );
-      // }
     }
   }
 

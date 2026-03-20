@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:odogo_app/controllers/auth_controller.dart';
 
-class AccountNotFoundScreen extends StatelessWidget {
+class AccountNotFoundScreen extends ConsumerWidget {
   final bool isDriver;
   final String email;
 
@@ -12,7 +14,7 @@ class AccountNotFoundScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final roleLabel = isDriver ? 'Driver' : 'Commuter';
 
     return Scaffold(
@@ -22,7 +24,7 @@ class AccountNotFoundScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.go('/login'),
+          onPressed: () => ref.read(authControllerProvider.notifier).abortSignup(),
         ),
       ),
       body: SafeArea(
@@ -103,7 +105,7 @@ class AccountNotFoundScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () => context.go('/login'),
+                onPressed: () => ref.read(authControllerProvider.notifier).abortSignup(),
                 child: const Text(
                   'Back to Login',
                   style: TextStyle(color: Colors.black87),

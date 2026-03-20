@@ -44,8 +44,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isUnauthRoute =
           path.startsWith('/login') ||
           path.startsWith('/sign-in') ||
-          path.startsWith('/otp') ||
-          path.startsWith('/account-not-found');
+          path.startsWith('/otp');
 
       // 3. Handle Logged-Out Users (BRUTE FORCE BYPASS)
       if (authState is AuthInitial ||

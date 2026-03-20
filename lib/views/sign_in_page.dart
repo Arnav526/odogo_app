@@ -103,7 +103,13 @@ class _SignInPageState extends ConsumerState<SignInPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/login');
+            }
+          }
         ),
       ),
       body: SafeArea(
