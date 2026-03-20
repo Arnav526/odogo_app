@@ -292,7 +292,7 @@ class _TripConfirmationScreenState extends ConsumerState<TripConfirmationScreen>
                       } catch (e) {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to request ride: $e'), backgroundColor: Colors.red),
+                            SnackBar(content: Text('Failed to request ride: $e'.replaceFirst('Exception: ', '').trim()), backgroundColor: Colors.red),
                           );
                         }
                       }

@@ -121,7 +121,7 @@ class _LocationSharingScreenState extends ConsumerState<LocationSharingScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Failed to save: $e'.replaceFirst('Exception: ', '').trim()), backgroundColor: Colors.red),
       );
       setState(() => _isLoading = false);
     }

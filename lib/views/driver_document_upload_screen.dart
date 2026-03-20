@@ -79,7 +79,7 @@ class _DriverDocumentUploadScreenState
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error uploading docs: $e'),
+          content: Text('Error uploading docs: $e'.replaceFirst('Exception: ', '').trim()),
           backgroundColor: Colors.red,
         ),
       );
@@ -277,7 +277,7 @@ class _DriverDocumentUploadScreenState
 //     } catch (e) {
 //       ScaffoldMessenger.of(context).showSnackBar(
 //         SnackBar(
-//           content: Text('Error finalizing registration: $e'),
+//           content: Text('Error finalizing registration: $e'.replaceFirst('Exception: ', '').trim()),
 //           backgroundColor: Colors.red,
 //         ),
 //       );

@@ -101,7 +101,7 @@ class _AccountDeletionOtpScreenState
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to delete account: $e'),
+          content: Text('Failed to delete account: $e'.replaceFirst('Exception: ', '').trim()),
           backgroundColor: Colors.red,
         ),
       );

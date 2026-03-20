@@ -84,7 +84,7 @@ class TripRepository {
         }
       }
     } catch (e) {
-      print("Failed to cleanup old trips: $e");
+      print("Failed to cleanup old trips: $e".replaceFirst('Exception: ', '').trim());
     }
   }
 }

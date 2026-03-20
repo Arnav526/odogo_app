@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
-import 'package:go_router/go_router.dart';
 import 'package:odogo_app/controllers/trip_controller.dart';
 import 'package:odogo_app/models/enums.dart';
 import 'package:odogo_app/models/trip_model.dart';

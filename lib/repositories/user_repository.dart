@@ -22,7 +22,7 @@ class UserRepository {
       }
       return null;
     } catch (e) {
-      print('Error fetching user: $e');
+      print('Error fetching user: $e'.replaceFirst('Exception: ', '').trim());
       throw Exception('Failed to fetch user profile.');
     }
   }
@@ -41,7 +41,7 @@ class UserRepository {
       }
       return null;
     } catch (e) {
-      print('Error fetching user by email: $e');
+      print('Error fetching user by email: $e'.replaceFirst('Exception: ', '').trim());
       throw Exception('Failed to fetch user profile.');
     }
   }
@@ -52,7 +52,7 @@ class UserRepository {
     try {
       await _users.doc(user.userID).set(user.toJson());
     } catch (e) {
-      print('Error creating user: $e');
+      print('Error creating user: $e'.replaceFirst('Exception: ', '').trim());
       throw Exception('Failed to create user profile.');
     }
   }
@@ -63,7 +63,7 @@ class UserRepository {
     try {
       await _users.doc(uid).update(data);
     } catch (e) {
-      print('Error updating user: $e');
+      print('Error updating user: $e'.replaceFirst('Exception: ', '').trim());
       throw Exception('Failed to update user profile.');
     }
   }

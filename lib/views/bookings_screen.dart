@@ -37,7 +37,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 child: CircularProgressIndicator(color: odoGoGreen),
               ),
               error: (error, stack) =>
-                  Center(child: Text('Error loading bookings: $error')),
+                  Center(child: Text('Error loading bookings: $error'.replaceFirst('Exception: ', '').trim())),
               data: (allTrips) {
                 if (allTrips.isEmpty) {
                   return const Center(
@@ -392,7 +392,7 @@ class CommuterBookingCard extends ConsumerWidget {
 //                 child: CircularProgressIndicator(color: odoGoGreen)
 //               ),
 //               error: (error, stack) => Center(
-//                 child: Text('Error loading bookings: $error')
+//                 child: Text('Error loading bookings: $error'.replaceFirst('Exception: ', '').trim())
 //               ),
 //               data: (allTrips) {
 //                 if (allTrips.isEmpty) {

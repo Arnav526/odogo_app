@@ -43,7 +43,7 @@ class _CommuteAlertsScreenState extends ConsumerState<CommuteAlertsScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      print('Error loading notification settings: $e');
+      print('Error loading notification settings: $e'.replaceFirst('Exception: ', '').trim());
     }
   }
 

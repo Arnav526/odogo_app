@@ -185,7 +185,7 @@ class TripController extends Notifier<AsyncValue<void>> {
 
       state = const AsyncValue.data(null);
     } catch (e, st) {
-      print('DEBUG: acceptRide error: $e');
+      print('DEBUG: acceptRide error: $e'.replaceFirst('Exception: ', '').trim());
       print('DEBUG: Stack trace: $st');
       state = AsyncValue.error(e, st);
     }

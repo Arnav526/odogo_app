@@ -294,7 +294,7 @@ class _DriverBookingsScreenState extends ConsumerState<DriverBookingsScreen> {
                 child: CircularProgressIndicator(color: odoGoGreen),
               ),
               error: (error, stack) =>
-                  Center(child: Text('Error loading bookings: $error')),
+                  Center(child: Text('Error loading bookings: $error'.replaceFirst('Exception: ', '').trim())),
               data: (allTrips) {
                 if (allTrips.isEmpty) {
                   return const Center(

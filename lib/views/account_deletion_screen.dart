@@ -51,7 +51,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to send OTP: $e'),
+          content: Text('Failed to send OTP: $e'.replaceFirst('Exception: ', '').trim()),
           backgroundColor: Colors.red,
         ),
       );
