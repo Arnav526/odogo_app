@@ -227,7 +227,8 @@ class _SwitchAccountScreenState extends ConsumerState<SwitchAccountScreen> {
         backgroundColor: Colors.green,
       ),
     );
-
+    
+    Navigator.of(context).pop();
     final updatedUser = ref.read(currentUserProvider);
 
     if (updatedUser?.role == UserRole.driver) {

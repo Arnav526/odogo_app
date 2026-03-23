@@ -44,18 +44,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isUnauthRoute =
           path.startsWith('/login') ||
           path.startsWith('/sign-in') ||
-          path.startsWith('/otp');
+          path.startsWith('/otp') ||
+          path.startsWith('/account-not-found');
 
       // 3. Handle Logged-Out Users (BRUTE FORCE BYPASS)
       if (authState is AuthInitial ||
           authState is AuthError ||
           authState is AuthOtpSent) {
-        
+
         if (path.startsWith('/splash')) return '/login'; 
-        
+
         // If they are going to ANY unauth route (like /otp), DO NOT INTERFERE.
         if (isUnauthRoute) return null; 
-        
+
         return '/login'; 
       }
 
@@ -65,7 +66,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         final isDriver = user.role == UserRole.driver;
 
         if (path.startsWith('/otp')) return null;
-        
+
         // Allow drivers to access active-pickup screen regardless of mode
         if (path.startsWith('/active-pickup')) return null;
 

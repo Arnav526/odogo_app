@@ -104,13 +104,13 @@ class AccountNotFoundScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              TextButton(
-                onPressed: () => ref.read(authControllerProvider.notifier).abortSignup(),
-                child: const Text(
-                  'Back to Login',
-                  style: TextStyle(color: Colors.black87),
-                ),
-              ),
+              // TextButton(
+              //   onPressed: () => ref.read(authControllerProvider.notifier).abortSignup(),
+              //   child: const Text(
+              //     'Back to Login',
+              //     style: TextStyle(color: Colors.black87),
+              //   ),
+              // ),
               const SizedBox(height: 12),
             ],
           ),

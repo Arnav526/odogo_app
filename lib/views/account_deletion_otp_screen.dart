@@ -93,6 +93,7 @@ class _AccountDeletionOtpScreenState
 
       // 4. Pull the plug.
       // This wipes the hard drive and triggers GoRouter to cleanly slide you back to the Landing Page.
+      Navigator.of(context).popUntil((route) => route.isFirst);
       ref.read(authControllerProvider.notifier).logout();
     } catch (e) {
       if (!mounted) return;
