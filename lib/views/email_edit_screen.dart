@@ -20,11 +20,10 @@ class _EmailEditScreenState extends ConsumerState<EmailEditScreen> {
   }
 
   void _loadEmail() {
-    // Read the current user state directly from your provider
+    // Read the current user state directly from the provider
     final activeUser = ref.read(currentUserProvider);
 
     setState(() {
-      // Use the exact same emailID property from your SwitchAccountScreen logic
       if (activeUser != null && activeUser.emailID.isNotEmpty) {
         _controller.text = activeUser.emailID;
       } else {

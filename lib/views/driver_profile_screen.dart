@@ -142,26 +142,6 @@ class DriverProfileScreen extends ConsumerWidget {
                         color: Colors.black12,
                       ),
 
-                      // 3. THE REST OF THE MENU
-                      // _buildTile(
-                      //   context,
-                      //   Icons.location_on_outlined,
-                      //   'Location Sharing',
-                      //   onTap: () {
-                      //     Navigator.push(
-                      //       context,
-                      //       MaterialPageRoute(
-                      //         builder: (context) =>
-                      //             const LocationSharingScreen(),
-                      //       ),
-                      //     );
-                      //   },
-                      // ),
-                      // const Divider(
-                      //   height: 30,
-                      //   thickness: 1,
-                      //   color: Colors.black12,
-                      // ),
                       _buildTile(
                         context,
                         Icons.notifications_none,

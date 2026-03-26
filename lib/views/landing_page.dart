@@ -36,7 +36,6 @@ class _LandingPageState extends State<LandingPage> {
                 ),
               ),
 
-              // THE NEW DYNAMIC SUBTITLE
               Text(
                 isDriverView ? 'DRIVER' : 'COMMUTER',
                 style: const TextStyle(
@@ -103,7 +102,6 @@ class _LandingPageState extends State<LandingPage> {
                   });
 
                   ScaffoldMessenger.of(context).clearSnackBars();
-                  // Show the new snackbar
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(

@@ -182,7 +182,7 @@ void main() {
     await controller.completeProfileSetup(newUser);
     verify(() => mockUserRepo.createUser(newUser)).called(1);
     final finalState = container.read(authControllerProvider);
-    expect(finalState, isA<AuthAuthenticated>())
+    expect(finalState, isA<AuthAuthenticated>());
     expect((finalState as AuthAuthenticated).user.emailID, 'freshman@gmail.com');
   });
 

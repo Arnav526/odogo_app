@@ -285,7 +285,6 @@ class _ProfileOtpVerificationScreenState
     );
   }
 
-  // The premium auto-shifting PIN box UI
   Widget _buildOtpBox(int index) {
     return Container(
       width: 65,

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odogo_app/models/user_model.dart';
 import 'package:odogo_app/repositories/user_repository.dart';

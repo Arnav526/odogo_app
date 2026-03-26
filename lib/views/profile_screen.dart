@@ -90,7 +90,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
 
-            // SCROLLABLE LIST SECTION
+            // Scrollable list section
             Expanded(
               child: ScrollConfiguration(
                 behavior: ScrollBehavior().copyWith(overscroll: false),
@@ -100,7 +100,7 @@ class ProfileScreen extends ConsumerWidget {
                     children: [
                       const SizedBox(height: 10),
 
-                      // PERSONAL DETAILS BUTTON
+                      // Personal details button
                       _buildTile(
                         context,
                         Icons.badge_outlined,
@@ -154,25 +154,6 @@ class ProfileScreen extends ConsumerWidget {
                           );
                         },
                       ),
-                      // const Divider(
-                      //   height: 30,
-                      //   thickness: 1,
-                      //   color: Colors.black12,
-                      // ),
-                      // _buildTile(
-                      //   context,
-                      //   Icons.location_on_outlined,
-                      //   'Location Sharing',
-                      //   onTap: () {
-                      //     Navigator.push(
-                      //       context,
-                      //       MaterialPageRoute(
-                      //         builder: (context) =>
-                      //             const LocationSharingScreen(),
-                      //       ),
-                      //     );
-                      //   },
-                      // ),
                       const Divider(
                         height: 30,
                         thickness: 1,

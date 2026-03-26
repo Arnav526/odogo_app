@@ -73,7 +73,6 @@ class _DriverDocumentUploadScreenState
       // Refresh the active state so the app knows we have a vehicle now
       await ref.read(authControllerProvider.notifier).refreshUser();
 
-      // We DO NOT use Navigator.push here.
       // GoRouter will see the refreshed user has vehicle data and teleport them to the Home Screen!
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

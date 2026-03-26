@@ -688,7 +688,7 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView>
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
-                              homeAddress!,
+                              homeAddress,
                               style: const TextStyle(color: Colors.grey),
                             ),
                             onTap: () =>
@@ -706,7 +706,7 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView>
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
-                              workAddress!,
+                              workAddress,
                               style: const TextStyle(color: Colors.grey),
                             ),
                             onTap: () =>
@@ -908,7 +908,7 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView>
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
-                              homeAddress!,
+                              homeAddress,
                               style: const TextStyle(color: Colors.grey),
                             ),
                             onTap: () =>
@@ -926,7 +926,7 @@ class _MapHomeViewState extends ConsumerState<_MapHomeView>
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
-                              workAddress!,
+                              workAddress,
                               style: const TextStyle(color: Colors.grey),
                             ),
                             onTap: () =>

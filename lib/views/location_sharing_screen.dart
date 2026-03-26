@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../controllers/auth_controller.dart'; // Adjust path if needed
+import '../controllers/auth_controller.dart';
 
 class LocationSharingScreen extends ConsumerStatefulWidget {
   const LocationSharingScreen({super.key});
@@ -21,9 +21,8 @@ class _LocationSharingScreenState extends ConsumerState<LocationSharingScreen> {
     _initializeSettings();
   }
 
-  // 1. Fetch current status when screen opens
+  // Fetch current status when screen opens
   Future<void> _initializeSettings() async {
-    final user = ref.read(currentUserProvider);
     
     // Check OS-level permissions
     var status = await Permission.location.status;
@@ -39,7 +38,6 @@ class _LocationSharingScreenState extends ConsumerState<LocationSharingScreen> {
     });
   }
 
-  // 2. Handle the toggle switch
   Future<void> _handleToggle(bool value) async {
     if (value) {
       // User wants to turn it ON -> Ask OS for permission
@@ -68,7 +66,7 @@ class _LocationSharingScreenState extends ConsumerState<LocationSharingScreen> {
     }
   }
 
-  // 3. Prompt user to open iOS/Android settings if permanently denied
+  // Prompt user to open Android settings if permanently denied
   void _showSettingsDialog() {
     showDialog(
       context: context,
@@ -93,7 +91,7 @@ class _LocationSharingScreenState extends ConsumerState<LocationSharingScreen> {
     );
   }
 
-  // 4. Save to Firebase Database
+  // Save to database
   Future<void> _saveSettings() async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;

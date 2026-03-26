@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../controllers/auth_controller.dart';
+import 'package:odogo_app/controllers/auth_controller.dart';
 
 class SignOutScreen extends ConsumerWidget {
   const SignOutScreen({super.key});
@@ -107,33 +107,10 @@ class SignOutScreen extends ConsumerWidget {
         elevation: 0,
       ),
       onPressed: () async {
-        // if (text == 'YES') {
-        //   // Await the logout process so the backend actually finishes
-        //   await ref.read(authControllerProvider.notifier).logout();
-        //   // Safety check to prevent errors after an async gap
-        //   if (!context.mounted) return;
-        //   // See if there is a linked account still logged in
-        //   final updatedUser = ref.read(currentUserProvider);
-
-        //   if (updatedUser != null) {
-        //     // There is another account active! Route them to their proper home.
-        //     if (updatedUser.role == UserRole.driver) {
-        //       context.go('/driver-home');
-        //     } else {
-        //       context.go('/commuter-home');
-        //     }
-        //   } else {
-        //     // EVERYONE is logged out. Force them back to the Landing Page!
-        //     context.go('/login');
-        //   }
-        // } else {
-        //   Navigator.pop(context);
-        // }
         if (text == 'YES') {
           // Pop manual overlay screens first so GoRouter has a clean slate
           Navigator.of(context).popUntil((route) => route.isFirst);
-          // Safely log out. GoRouter automatically detects the state change
-          // and pushes them to the next account or the Landing Page!
+          // Safely log out. GoRouter automatically detects the state change and pushes them to the next account or the Landing Page!
           ref.read(authControllerProvider.notifier).logout();
         } else {
           Navigator.pop(context);
