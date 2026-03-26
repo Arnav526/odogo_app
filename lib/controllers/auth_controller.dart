@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:odogo_app/models/user_model.dart';
+import 'package:odogo_app/repositories/user_repository.dart';
+import 'package:odogo_app/services/email_link_auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/email_link_auth_service.dart';
-import '../repositories/user_repository.dart';
-import '../models/user_model.dart';
 
 // Auth States
 abstract class AuthState {}
@@ -203,6 +203,8 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> deleteAccount(String email, String otp) async {
+    // Save the previous state so we can safely revert if the OTP is wrong
+    final previousState = state;
     state = AuthLoading();
     try {
       final verified = _authService.verifyOtp(
@@ -211,6 +213,8 @@ class AuthController extends Notifier<AuthState> {
         otp: otp,
       );
       if (!verified) {
+        // Revert to previous state to avoid locking the user out due to a wrong OTP
+        state = previousState;
         state = AuthError("Invalid or expired OTP. Please try again.");
         return;
       }
@@ -236,6 +240,7 @@ class AuthController extends Notifier<AuthState> {
         state = AuthInitial();
       }
     } catch (e) {
+      state = previousState; // Revert state on any error
       state = AuthError("Failed to delete account: $e");
     }
   }

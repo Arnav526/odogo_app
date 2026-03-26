@@ -49,13 +49,21 @@ class TripRepository {
     }
   }
 
+  // Completely removes a trip from the database to save space.
+  Future<void> deleteTrip(String tripID) async {
+    try {
+      await _trips.doc(tripID).delete();
+    } catch (e) {
+      throw Exception('Failed to delete trip: $e');
+    }
+  }
+
   // Cleans up old trips to save database space.
   // Keeps a maximum of 100 trips, AND deletes anything older than 30 days.
   Future<void> cleanupOldTrips(String userID, String roleField) async {
     try {
       final oneMonthAgo = DateTime.now().subtract(const Duration(days: 30));
 
-      // Fetch all finished trips for this user
       final snapshot = await _trips
           .where(roleField, isEqualTo: userID)
           .where('status', whereIn: ['completed', 'cancelled'])
@@ -63,22 +71,28 @@ class TripRepository {
 
       final docs = snapshot.docs;
 
-      // Sort locally by tripID (which is a timestamp epoch in your app)
+      // Sort locally using the actual bookingTime field!
       docs.sort((a, b) {
-        final timeA = int.tryParse(a.id) ?? 0;
-        final timeB = int.tryParse(b.id) ?? 0;
+        final dataA = a.data() as Map<String, dynamic>;
+        final dataB = b.data() as Map<String, dynamic>;
+        final timeA =
+            (dataA['bookingTime'] as Timestamp?)?.toDate() ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        final timeB =
+            (dataB['bookingTime'] as Timestamp?)?.toDate() ??
+            DateTime.fromMillisecondsSinceEpoch(0);
         return timeB.compareTo(timeA); // Descending (newest first)
       });
 
-      // Loop through and delete based on constraints
       for (int i = 0; i < docs.length; i++) {
-        final tripEpoch = int.tryParse(docs[i].id) ?? 0;
-        final tripDate = DateTime.fromMillisecondsSinceEpoch(tripEpoch);
+        final data = docs[i].data() as Map<String, dynamic>;
+        final tripDate =
+            (data['bookingTime'] as Timestamp?)?.toDate() ??
+            DateTime.fromMillisecondsSinceEpoch(0);
 
         final isTooOld = tripDate.isBefore(oneMonthAgo);
         final isBeyond100 = i >= 100;
 
-        // If it violates either constraint (minm of 1 month or 100 rides)
         if (isTooOld || isBeyond100) {
           await _trips.doc(docs[i].id).delete();
         }

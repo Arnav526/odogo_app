@@ -40,8 +40,8 @@ final pendingTripsProvider = StreamProvider<List<TripModel>>((ref) {
         if (minutesLeft == 60) return true; // 1 hour prior
         if (minutesLeft == 30) return true; // 30 mins prior
 
-        // Continuous broadcast starting 15 mins prior (up until 1 hr after in case of delays)
-        if (minutesLeft <= 15 && minutesLeft >= -60) return true;
+        // Continuous broadcast starting 15 mins prior (up until 15 mins after in case of delays)
+        if (minutesLeft <= 15 && minutesLeft >= -15) return true;
       }
 
       // If it doesn't match the time windows, keep it hidden from the driver!
@@ -370,6 +370,12 @@ class TripController extends Notifier<AsyncValue<void>> {
       await _repository.updateTripData(trip.tripID, {
         'status': TripStatus.cancelled.name,
       });
+      // Free the driver if one was assigned
+      if (trip.driverID != null) {
+        await ref.read(userRepositoryProvider).updateUser(trip.driverID!, {
+          'mode': DriverMode.online.name,
+        });
+      }
     } catch (e) {
       print('Error cancelling by commuter: $e');
     }
@@ -382,8 +388,25 @@ class TripController extends Notifier<AsyncValue<void>> {
         'driverID': null,
         'driverName': null,
       });
+      // Free the driver who just cancelled
+      if (trip.driverID != null) {
+        await ref.read(userRepositoryProvider).updateUser(trip.driverID!, {
+          'mode': DriverMode.online.name,
+        });
+      }
     } catch (e) {
       print('Error cancelling by driver: $e');
+    }
+  }
+
+  // Auto-cancels an immediate ride if no driver accepts within 15 minutes
+  Future<void> autoCancelExpiredRide(String tripID) async {
+    try {
+      await _repository.updateTripData(tripID, {
+        'status': TripStatus.cancelled.name,
+      });
+    } catch (e) {
+      print('Error auto-cancelling ride: $e');
     }
   }
 }
