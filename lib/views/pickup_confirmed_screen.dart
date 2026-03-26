@@ -406,17 +406,17 @@ class _PickupConfirmedScreenState extends ConsumerState<PickupConfirmedScreen> {
             ),
           ),
 
-          Positioned(
-            top: 50,
-            left: 16,
-            child: CircleAvatar(
-              backgroundColor: Colors.black87,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: _cancelRide,
-              ),
-            ),
-          ),
+          // Positioned(
+          //   top: 50,
+          //   left: 16,
+          //   child: CircleAvatar(
+          //     backgroundColor: Colors.black87,
+          //     child: IconButton(
+          //       icon: const Icon(Icons.arrow_back, color: Colors.white),
+          //       onPressed: _cancelRide,
+          //     ),
+          //   ),
+          // ),
 
           Positioned(
             bottom: 24,
