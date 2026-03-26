@@ -204,6 +204,9 @@ class TripController extends Notifier<AsyncValue<void>> {
   }
 
   /// Driver: Marks the ride as picked up / in progress
+  /// [TESTED BY]: TC-03 (Asynchronous State Transition)
+  /// Scope: Ensures the UI state immediately transitions from Data -> Loading.
+  /// This prevents "double-tapping" and provides user feedback during latency.
   Future<void> startRide(String tripID) async {
     state = const AsyncValue.loading();
     try {
@@ -218,6 +221,8 @@ class TripController extends Notifier<AsyncValue<void>> {
   }
 
   /// User/Driver: Cancels the ride with smart constraint rules and re-broadcasting
+  /// [TESTED BY]: TC-02 (Cancellation Strike Rule)
+  /// Verifies the 15-minute window and max 2-strike logic.
   Future<void> cancelRide(String tripID) async {
     state = const AsyncValue.loading();
     try {
@@ -312,6 +317,8 @@ class TripController extends Notifier<AsyncValue<void>> {
   }
 
   /// User: Marks their side of the ride as complete
+  /// [TESTED BY]: TC-01 (Ride Completion Logic)
+  /// Verifies status only changes to 'completed' when both flags are true.
   Future<void> completeRide({
     required String tripID,
     required bool isDriver,

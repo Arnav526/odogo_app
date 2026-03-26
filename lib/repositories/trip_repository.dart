@@ -8,6 +8,8 @@ class TripRepository {
   CollectionReference get _trips => _firestore.collection('trips');
 
   /// Commuter: Requests a new ride.
+  /// [TESTED BY]: TR-01 (Data Persistence)
+  /// Verifies the TripModel is correctly serialized to JSON and saved to Firestore.
   Future<void> createTrip(TripModel trip) async {
     try {
       await _trips.doc(trip.tripID).set(trip.toJson());
@@ -17,6 +19,8 @@ class TripRepository {
   }
 
   /// Driver: Streams all trips currently sitting in the 'pending' state.
+  /// [TESTED BY]: TR-02 (Stream Filtering)
+  /// Verifies the query logic only returns trips with 'pending' or 'scheduled' status.
   Stream<List<TripModel>> streamPendingTrips() {
     return _trips
         .where('status', whereIn: ['pending', 'scheduled'])
@@ -54,6 +58,8 @@ class TripRepository {
 
   /// Driver: Accepts a trip or updates its status (e.g., pending -> ongoing -> completed).
   /// Universal: Updates any specific fields on a trip document.
+  /// [TESTED BY]: TR-03 (Atomic Field Updates)
+  /// Verifies that updating one field (like status) doesn't corrupt others (like ridePIN).
   Future<void> updateTripData(String tripID, Map<String, dynamic> data) async {
     try {
       await _trips.doc(tripID).update(data);
