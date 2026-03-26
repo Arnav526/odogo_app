@@ -84,6 +84,109 @@ void main() {
     expect((finalState as AuthError).message, contains(errorMessage)); 
   });
 
+
+  // ------------------------------------------------------------------
+  // POINT 3: OTP Verification (Login / Register Success)
+  // ------------------------------------------------------------------
+  test('verifyOtp success fetches user and changes state to AuthAuthenticated', () async {
+    const testEmail = 'user@gmail.com';
+    const testOtp = '0000';
+
+    when(() => mockAuthService.verifyOtp(email: testEmail, otp: testOtp)).thenReturn(true);
+
+   
+    final fakeUser = UserModel(
+      userID: 'user_123',
+      emailID: testEmail,
+      name: 'Aiklavyaveer',
+      phoneNo: '9876543210',
+      gender: 'Male',
+      dob: Timestamp.now(),
+      role: UserRole.commuter,
+    );
+    when(() => mockUserRepo.getUserByEmail(testEmail)).thenAnswer((_) async => fakeUser);
+
+    final controller = container.read(authControllerProvider.notifier);
+    await waitForBoot(controller);
+
+    await controller.verifyOtp(testEmail, testOtp);
+
+    final finalState = container.read(authControllerProvider);
+    expect(finalState, isA<AuthAuthenticated>());
+    expect((finalState as AuthAuthenticated).user.emailID, testEmail);
+  });
+
+  // ------------------------------------------------------------------
+  // POINT 3 EDGE CASE: OTP Verification Fails (Wrong OTP)
+  // ------------------------------------------------------------------
+  test('verifyOtp failure sets state to AuthError when OTP is incorrect', () async {
+    const testEmail = 'student@test.com';
+    const wrongOtp = '9999';
+
+    
+    when(() => mockAuthService.verifyOtp(email: testEmail, otp: wrongOtp)).thenReturn(false);
+
+    final controller = container.read(authControllerProvider.notifier);
+    await waitForBoot(controller);
+
+    await controller.verifyOtp(testEmail, wrongOtp);
+
+  
+    final finalState = container.read(authControllerProvider);
+   
+    expect(finalState, isA<AuthError>());
+   
+    expect((finalState as AuthError).message, contains("Invalid or expired OTP"));
+    
+    verifyNever(() => mockUserRepo.getUserByEmail(any()));
+  });
+
+  // ------------------------------------------------------------------
+  // POINT 1: Registering a New User (Database returns null)
+  // ------------------------------------------------------------------
+  test('verifyOtp for NEW user changes state to AuthNeedsProfileSetup', () async {
+    const testEmail = 'freshman@gmail.com';
+    const testOtp = '0000';
+
+    when(() => mockAuthService.verifyOtp(email: testEmail, otp: testOtp)).thenReturn(true);
+    
+    when(() => mockUserRepo.getUserByEmail(testEmail)).thenAnswer((_) async => null);
+
+    final controller = container.read(authControllerProvider.notifier);
+    await waitForBoot(controller);
+
+    await controller.verifyOtp(testEmail, testOtp);
+
+    final finalState = container.read(authControllerProvider);
+    expect(finalState, isA<AuthNeedsProfileSetup>());
+  });
+
+  // ------------------------------------------------------------------
+  // POINT 1: Registering a New User (Saving the profile)
+  // ------------------------------------------------------------------
+  test('completeProfileSetup saves new user to database and authenticates', () async {
+    final newUser = UserModel(
+      userID: 'new_uid_999',
+      emailID: 'freshman@gmail.com',
+      name: 'Aiklavyaveer',
+      phoneNo: '1234567890',
+      gender: 'Male',
+      dob: Timestamp.now(),
+      role: UserRole.commuter,
+    );
+
+    when(() => mockUserRepo.createUser(newUser)).thenAnswer((_) async {});
+
+    final controller = container.read(authControllerProvider.notifier);
+    await waitForBoot(controller);
+    await controller.completeProfileSetup(newUser);
+    verify(() => mockUserRepo.createUser(newUser)).called(1);
+    final finalState = container.read(authControllerProvider);
+    expect(finalState, isA<AuthAuthenticated>())
+    expect((finalState as AuthAuthenticated).user.emailID, 'freshman@gmail.com');
+  });
+
+
   // ------------------------------------------------------------------
   // FEATURE 16: Switch Account
   // ------------------------------------------------------------------
